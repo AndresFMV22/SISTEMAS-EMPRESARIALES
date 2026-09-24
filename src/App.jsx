@@ -561,6 +561,8 @@ function AddDialog({ label, title, fields, onSubmit, selects = {} }) {
     e.preventDefault();
     const first = fields[0];
     if (first && !String(v[first.key] || "").trim()) { setError(`${first.label} es obligatorio.`); return; }
+    const pasada = fields.find((f) => f.type === "date" && v[f.key] && v[f.key] < hoy());
+    if (pasada) { setError("La fecha no puede ser anterior a hoy."); return; }
     setSaving(true); setError("");
     try {
       await onSubmit(v);
@@ -598,7 +600,8 @@ function AddDialog({ label, title, fields, onSubmit, selects = {} }) {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Input id={f.key} type={f.type || "text"} value={v[f.key]} onChange={set(f.key)} placeholder={f.ph || ""} />
+                  <Input id={f.key} type={f.type || "text"} value={v[f.key]} onChange={set(f.key)}
+                    placeholder={f.ph || ""} min={f.type === "date" ? hoy() : undefined} />
                 )}
               </div>
             ))}

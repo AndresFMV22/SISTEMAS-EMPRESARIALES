@@ -197,6 +197,30 @@
 }
 .card-spotlight:hover::before { opacity: 0.7; }
 
+/* StarBorder */
+.star-border-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+.star-glow {
+  position: absolute;
+  width: 300%;
+  height: 50%;
+  opacity: 0.6;
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(1px);
+}
+.star-bottom { bottom: -12px; right: -250%; animation: star-move-bottom linear infinite; }
+.star-top { top: -12px; left: -250%; animation: star-move-top linear infinite; }
+.star-inner { position: relative; z-index: 1; }
+@keyframes star-move-bottom { to { transform: translateX(-50%); } }
+@keyframes star-move-top { to { transform: translateX(50%); } }
+
 /* Scrollbar sutil azul */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -209,5 +233,5 @@
 ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.45); background-clip: padding-box; }
 
 @media (prefers-reduced-motion: reduce) {
-  .shiny-text, .gradient-text-content, .gradient-overlay { animation: none !important; }
+  .shiny-text, .gradient-text-content, .gradient-overlay, .star-glow { animation: none !important; }
 }

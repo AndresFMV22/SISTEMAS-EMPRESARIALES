@@ -27,6 +27,7 @@ import SpotlightCard from "@/components/reactbits/SpotlightCard";
 import GradientText from "@/components/reactbits/GradientText";
 import ShinyText from "@/components/reactbits/ShinyText";
 import CountUp from "@/components/reactbits/CountUp";
+import StarBorder from "@/components/reactbits/StarBorder";
 import { isSupabaseReady } from "@/lib/supabase";
 import { fetchEntities, insertRow, updateRows } from "@/lib/db";
 import { DEMO } from "@/lib/demoData";
@@ -89,7 +90,7 @@ function Pill({ tone, children }) {
 
 function Mono({ text }) {
   return (
-    <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 bg-blue-500/10 text-xs font-bold text-blue-700">
+    <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-xs font-bold text-blue-700 dark:text-sky-300">
       {text.slice(0, 2).toUpperCase()}
     </div>
   );
@@ -149,13 +150,13 @@ function Login({ onLogin }) {
           </motion.p>
 
           <motion.div variants={fade} custom={2} className="mb-4">
-            <label className="mb-2 block text-xs font-medium tracking-wide text-blue-700">{t("login.user")}</label>
+            <label className="mb-2 block text-xs font-medium tracking-wide text-blue-700 dark:text-sky-300">{t("login.user")}</label>
             <Input value={usr} onChange={(e) => setUsr(e.target.value)}
               placeholder={t("login.userPh")} autoComplete="off" className="h-11 border-border bg-background" />
           </motion.div>
 
           <motion.div variants={fade} custom={3} className="mb-6">
-            <label className="mb-2 block text-xs font-medium tracking-wide text-blue-700">{t("login.pass")}</label>
+            <label className="mb-2 block text-xs font-medium tracking-wide text-blue-700 dark:text-sky-300">{t("login.pass")}</label>
             <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)}
               placeholder="••••••••" className="h-11 border-border bg-background" />
           </motion.div>
@@ -185,18 +186,20 @@ function Login({ onLogin }) {
 function StatCard({ k, i }) {
   return (
     <motion.div variants={fade} custom={i} initial="hidden" animate="show">
-      <SpotlightCard className={`rounded-2xl p-5 ${glass}`} spotlightColor="rgba(37,99,235,0.12)">
-        <div className="relative z-[2]">
-          <p className="mb-2 text-[13px] text-muted-foreground">{k.lbl}</p>
-          <p className="text-[27px] font-bold text-foreground">
-            <CountUp to={k.to} prefix={k.prefix || ""} suffix={k.suffix || ""} duration={1.6} />
-          </p>
-          <p className={`mt-1.5 flex items-center gap-1 text-xs ${k.up ? "text-emerald-600" : "text-rose-500"}`}>
-            {k.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-            {k.delta}
-          </p>
-        </div>
-      </SpotlightCard>
+      <StarBorder color="#38bdf8" speed="6s" thickness={1}>
+        <SpotlightCard className={`rounded-2xl p-5 ${glass}`} spotlightColor="rgba(37,99,235,0.12)">
+          <div className="relative z-[2]">
+            <p className="mb-2 text-[13px] text-muted-foreground">{k.lbl}</p>
+            <p className="text-[27px] font-bold text-foreground">
+              <CountUp to={k.to} prefix={k.prefix || ""} suffix={k.suffix || ""} duration={1.6} />
+            </p>
+            <p className={`mt-1.5 flex items-center gap-1 text-xs ${k.up ? "text-emerald-600" : "text-rose-500"}`}>
+              {k.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+              {k.delta}
+            </p>
+          </div>
+        </SpotlightCard>
+      </StarBorder>
     </motion.div>
   );
 }
@@ -295,7 +298,7 @@ function Dashboard({ reservas }) {
           </TableHeader>
           <TableBody>
             {filtradas.slice(0, 12).map((r) => (
-              <TableRow key={r[0]} className="border-border hover:bg-sky-50">
+              <TableRow key={r[0]} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
                 <TableCell className="font-medium text-foreground">{r[0]}</TableCell>
                 <TableCell>{r[1]}</TableCell>
                 <TableCell>{r[2]}</TableCell>
@@ -325,7 +328,7 @@ function DataView({ title, cols, rows, cta, action }) {
         </TableHeader>
         <TableBody>
           {rows.map((r, ri) => (
-            <TableRow key={ri} className="border-border hover:bg-sky-50">
+            <TableRow key={ri} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
               {r.map((cell, ci) =>
                 cell && typeof cell === "object"
                   ? <TableCell key={ci}><Pill tone={cell.tone}>{cell.text}</Pill></TableCell>
@@ -358,7 +361,7 @@ function PaymentDialog({ code, info, onPay }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50">
+        <Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 dark:border-sky-500/30 text-blue-700 dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-blue-400/15">
           <CreditCard className="h-3.5 w-3.5" />{t("btn.pay")}
         </Button>
       </DialogTrigger>
@@ -403,7 +406,7 @@ function ReservasView({ reservas, onPay, getInfo, action }) {
         </TableHeader>
         <TableBody>
           {reservas.map((r) => (
-            <TableRow key={r[0]} className="border-border hover:bg-sky-50">
+            <TableRow key={r[0]} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
               <TableCell className="font-medium text-foreground">{r[0]}</TableCell>
               <TableCell>{r[1]}</TableCell>
               <TableCell>{r[2]}</TableCell>
@@ -426,11 +429,39 @@ function ReservasView({ reservas, onPay, getInfo, action }) {
   );
 }
 
-function Paquetes({ paquetes }) {
+function Paquetes({ paquetes, action }) {
   const { t } = useLang();
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+  const lista = paquetes.filter((p) => {
+    if (desde && (!p.salida || p.salida < desde)) return false;
+    if (hasta && (!p.salida || p.salida > hasta)) return false;
+    return true;
+  });
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-      {paquetes.map((p, i) => {
+    <div className="space-y-5">
+      <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 ${glass}`}>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <CalendarDays className="h-4 w-4 text-blue-500" />
+          <span className="font-medium">{t("pkg.salida")}:</span>
+          <span>{t("dash.from")}</span>
+          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="h-8 w-[150px]" />
+          <span>{t("dash.to")}</span>
+          <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="h-8 w-[150px]" />
+          {(desde || hasta) && (
+            <Button size="sm" variant="ghost" className="h-8 px-2 text-blue-600" onClick={() => { setDesde(""); setHasta(""); }}>
+              {t("dash.clear")}
+            </Button>
+          )}
+        </div>
+        {action}
+      </div>
+
+      {lista.length === 0 ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">—</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {lista.map((p, i) => {
         const Icon = ICONS[p.iconKey] || Palmtree;
         return (
           <motion.div key={p.n} variants={fade} custom={i} initial="hidden" animate="show">
@@ -454,7 +485,9 @@ function Paquetes({ paquetes }) {
             </SpotlightCard>
           </motion.div>
         );
-      })}
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -490,7 +523,7 @@ function Reportes() {
           <div className="divide-y divide-border">
             {asesores.map((r, i) => (
               <div key={r[0]} className="flex items-center gap-3 py-2.5">
-                <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 bg-blue-500/10 text-sm font-bold text-blue-700">{i + 1}</div>
+                <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-sm font-bold text-blue-700 dark:text-sky-300">{i + 1}</div>
                 <div className="flex-1"><b className="text-sm text-foreground">{r[0]}</b><small className="block text-[11.5px] text-muted-foreground">{r[1]}</small></div>
                 <span className="text-sm font-semibold text-blue-600">{r[2]}</span>
               </div>
@@ -768,7 +801,7 @@ function ObsDialog({ current, onSave }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50">
+        <Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 dark:border-sky-500/30 text-blue-700 dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-blue-400/15">
           <MessageSquarePlus className="h-3.5 w-3.5" />{t("btn.observ")}
         </Button>
       </DialogTrigger>
@@ -811,7 +844,7 @@ function PeopleView({ title, action, rows, leadCols, actIdx, obsIdx, desIdx, has
             {rows.map((r) => {
               const activo = r[actIdx];
               return (
-                <TableRow key={r[0]} className={`border-border hover:bg-sky-50 ${activo ? "" : "opacity-55"}`}>
+                <TableRow key={r[0]} className={`border-border hover:bg-sky-50 dark:hover:bg-sky-400/10 ${activo ? "" : "opacity-55"}`}>
                   {leadCols.map((c, i) => <TableCell key={i} className={i === 0 ? "font-medium text-foreground" : ""}>{r[c.idx]}</TableCell>)}
                   <TableCell><Pill tone={activo ? "ok" : "bad"}>{activo ? t("st.active") : t("st.inactive")}</Pill></TableCell>
                   <TableCell className="max-w-[280px] align-top">
@@ -832,7 +865,7 @@ function PeopleView({ title, action, rows, leadCols, actIdx, obsIdx, desIdx, has
                     <div className="flex items-center gap-1.5">
                       <ObsDialog current={{ obs: r[obsIdx] || "", desde: r[desIdx] || "", hasta: r[hasIdx] || "" }} onSave={(o) => onObs(r[0], o)} />
                       <Button size="sm" variant="outline" onClick={() => onToggle(r[0], !activo)}
-                        className={`h-7 gap-1 ${activo ? "border-rose-200 text-rose-600 hover:bg-rose-50" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"}`}>
+                        className={`h-7 gap-1 ${activo ? "border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-400/15" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-400/15"}`}>
                         <Power className="h-3.5 w-3.5" />{activo ? t("btn.deactivate") : t("btn.activate")}
                       </Button>
                     </div>
@@ -1043,12 +1076,7 @@ function Shell({ onLogout, dark, setDark }) {
           actIdx={5} obsIdx={6} desIdx={7} hasIdx={8}
           onToggle={(c, a) => toggleActivo("empleados", c, a)} onObs={(c, o) => saveObs("empleados", c, o)} />;
       case "paquetes":
-        return (
-          <div className="space-y-4">
-            <div className="flex justify-end">{addAction("paquetes")}</div>
-            <Paquetes paquetes={data.paquetes} />
-          </div>
-        );
+        return <Paquetes paquetes={data.paquetes} action={addAction("paquetes")} />;
       case "reservas":
         return <ReservasView reservas={data.reservas} onPay={payReserva} getInfo={payInfo} action={addAction("reservas")} />;
       case "pagos":
@@ -1074,10 +1102,11 @@ function Shell({ onLogout, dark, setDark }) {
         initial={{ x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}
         className={`fixed z-30 h-screen w-64 shrink-0 border-r border-border bg-sidebar p-4 backdrop-blur-xl transition-transform md:sticky md:top-0 md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="mb-6 flex items-center gap-3 px-2">
+        <button type="button" onClick={() => { setView("dash"); setOpen(false); }} title={t("nav.dash")}
+          className="mb-6 flex w-full items-center gap-3 rounded-xl px-2 py-1 transition-colors hover:bg-sky-50 dark:hover:bg-sky-400/10">
           <LogoMark size="h-10 w-10" img="h-8 w-8" />
           <span className="text-lg font-bold text-foreground">Nóva<GradientText colors={brandColors}>Travel</GradientText></span>
-        </div>
+        </button>
         <nav className="space-y-1">
           {NAV.map((n) => (
             <div key={n.id}>
@@ -1086,8 +1115,8 @@ function Shell({ onLogout, dark, setDark }) {
                 onClick={() => { setView(n.id); setOpen(false); }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
                   view === n.id
-                    ? "border border-blue-200 bg-gradient-to-br from-sky-500/15 to-blue-600/15 font-medium text-blue-700 shadow-sm"
-                    : "text-muted-foreground hover:bg-sky-50 hover:text-blue-700"
+                    ? "border border-blue-200 dark:border-sky-500/30 bg-gradient-to-br from-sky-500/15 to-blue-600/15 font-medium text-blue-700 dark:text-sky-300 shadow-sm"
+                    : "text-muted-foreground hover:bg-sky-50 dark:hover:bg-sky-400/10 hover:text-blue-700 dark:text-sky-300"
                 }`}
               >
                 <n.icon className="h-[18px] w-[18px]" />{t("nav." + n.id)}

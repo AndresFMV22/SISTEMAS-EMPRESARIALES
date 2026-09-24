@@ -22,9 +22,15 @@ export async function fetchEntities() {
   };
 }
 
-// Inserta un cliente. Devuelve el registro creado (fila de Supabase).
-export async function insertCliente(payload) {
-  const { data, error } = await supabase.from("clientes").insert(payload).select().single();
+// Inserta un registro en cualquier tabla. Devuelve la fila creada.
+export async function insertRow(table, payload) {
+  const { data, error } = await supabase.from(table).insert(payload).select().single();
   if (error) throw error;
   return data;
+}
+
+// Actualiza filas de una tabla donde matchCol == matchVal.
+export async function updateRows(table, matchCol, matchVal, patch) {
+  const { error } = await supabase.from(table).update(patch).eq(matchCol, matchVal);
+  if (error) throw error;
 }

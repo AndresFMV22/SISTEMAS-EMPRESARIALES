@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Palmtree, CalendarDays, CreditCard,
   ReceiptText, Building2, BarChart3, Search, LogOut, Menu, TrendingUp,
   TrendingDown, Plus, Umbrella, Landmark, Waves, FerrisWheel, Mountain,
-  Building, Bus, Ship, Plane, Database, CircleAlert,
+  Building, Bus, Ship, Plane, Database, CircleAlert, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,9 @@ import {
   Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle,
   DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from "@/components/ui/select";
 import Squares from "@/components/reactbits/Squares";
 import ClickSpark from "@/components/reactbits/ClickSpark";
 import SpotlightCard from "@/components/reactbits/SpotlightCard";
@@ -24,7 +27,8 @@ import GradientText from "@/components/reactbits/GradientText";
 import ShinyText from "@/components/reactbits/ShinyText";
 import CountUp from "@/components/reactbits/CountUp";
 import { isSupabaseReady } from "@/lib/supabase";
-import { fetchEntities, insertCliente } from "@/lib/db";
+import { fetchEntities, insertRow, updateRows } from "@/lib/db";
+import { DEMO } from "@/lib/demoData";
 
 const LOGO = "/logo-mark.png";
 
@@ -48,50 +52,6 @@ const DESTINOS = [
   { n: "Orlando", d: "USA · parques", p: 13 },
   { n: "Cusco", d: "Perú · Machu Picchu", p: 11 },
 ];
-
-const DEMO = {
-  clientes: [
-    ["CL-0031", "María Restrepo", "43.118.902", "maria.r@mail.com", "310 555 8841", 7, "ok", "Frecuente"],
-    ["CL-0032", "Carlos Gómez", "71.204.663", "c.gomez@mail.com", "301 442 1290", 3, "info", "Activo"],
-    ["CL-0033", "Laura Muñoz", "1.017.554.210", "laura.m@mail.com", "312 908 7756", 2, "info", "Activo"],
-    ["CL-0034", "Andrés Vélez", "98.552.117", "a.velez@mail.com", "314 220 3341", 5, "ok", "Frecuente"],
-    ["CL-0035", "Sofía Álvarez", "1.037.889.004", "sofia.a@mail.com", "300 771 4420", 1, "warn", "Nuevo"],
-  ],
-  paquetes: [
-    { iconKey: "umbrella", n: "Cancún Paraíso", loc: "México · 7 días / 6 noches", precio: "$ 6.480.000", cupo: "Cupos: 12 / 40 · Todo incluido" },
-    { iconKey: "landmark", n: "Madrid Imperial", loc: "España · 8 días / 7 noches", precio: "$ 9.120.000", cupo: "Cupos: 5 / 25 · Vuelo + hotel" },
-    { iconKey: "waves", n: "San Andrés Mar", loc: "Colombia · 4 días / 3 noches", precio: "$ 2.750.000", cupo: "Cupos: 20 / 50 · Con snorkel" },
-    { iconKey: "ferriswheel", n: "Orlando Familiar", loc: "USA · 9 días / 8 noches", precio: "$ 14.300.000", cupo: "Cupos: 3 / 30 · Parques incluidos" },
-    { iconKey: "mountain", n: "Cusco Ancestral", loc: "Perú · 6 días / 5 noches", precio: "$ 5.900.000", cupo: "Cupos: 8 / 20 · Machu Picchu" },
-    { iconKey: "building", n: "París Romántico", loc: "Francia · 7 días / 6 noches", precio: "$ 11.450.000", cupo: "Cupos: 6 / 24 · City tour" },
-  ],
-  reservas: [
-    ["#RS-20841", "María Restrepo", "Cancún Paraíso", 2, "2026-10-12", "Samuel P.", "ok", "Confirmada"],
-    ["#RS-20840", "Carlos Gómez", "Madrid Imperial", 1, "2026-11-03", "Juan J.", "warn", "Pago parcial"],
-    ["#RS-20839", "Laura Muñoz", "San Andrés Mar", 3, "2026-10-01", "Andrés M.", "ok", "Confirmada"],
-    ["#RS-20838", "Andrés Vélez", "Orlando Familiar", 4, "2026-12-20", "Samuel P.", "info", "En proceso"],
-    ["#RS-20837", "Sofía Álvarez", "Cusco Ancestral", 2, "2026-10-28", "Juan J.", "bad", "Pendiente"],
-  ],
-  pagos: [
-    ["#PG-9912", "#RS-20841", "María Restrepo", "Tarjeta crédito", "$ 6.480.000", "2026-09-23", "ok", "Pagado"],
-    ["#PG-9911", "#RS-20840", "Carlos Gómez", "Transferencia", "$ 4.500.000", "2026-09-23", "warn", "Abono 50%"],
-    ["#PG-9910", "#RS-20839", "Laura Muñoz", "PSE", "$ 2.750.000", "2026-09-22", "ok", "Pagado"],
-    ["#PG-9909", "#RS-20837", "Sofía Álvarez", "Efectivo", "$ 1.000.000", "2026-09-22", "warn", "Abono"],
-  ],
-  facturas: [
-    ["FE-004821", "María Restrepo", "43.118.902", "#RS-20841", "$ 6.480.000", "2026-09-23", "ok", "Aceptada"],
-    ["FE-004820", "Laura Muñoz", "1.017.554.210", "#RS-20839", "$ 2.750.000", "2026-09-22", "ok", "Aceptada"],
-    ["FE-004819", "Carlos Gómez", "71.204.663", "#RS-20840", "$ 4.500.000", "2026-09-23", "info", "Enviada"],
-    ["FE-004818", "Viajes Corp S.A.S", "900.552.118-4", "#RS-20835", "$ 22.900.000", "2026-09-21", "warn", "Por validar"],
-  ],
-  proveedores: [
-    ["Avianca", "Aerolínea", "ventas@avianca.com", "Comisión 8%", "ok", "Activo"],
-    ["Decameron", "Hotelería", "corporativo@decameron.com", "Tarifa neta", "ok", "Activo"],
-    ["LATAM Airlines", "Aerolínea", "b2b@latam.com", "Comisión 6%", "ok", "Activo"],
-    ["Meliá Hotels", "Hotelería", "reservas@melia.com", "Cupo garantizado", "warn", "En revisión"],
-    ["ExpediTours", "Operador terrestre", "ops@expeditours.com", "Por servicio", "info", "Nuevo"],
-  ],
-};
 
 const ICONS = { umbrella: Umbrella, landmark: Landmark, waves: Waves, ferriswheel: FerrisWheel, mountain: Mountain, building: Building };
 
@@ -360,6 +320,44 @@ function DataView({ title, cols, rows, cta, action }) {
   );
 }
 
+function ReservasView({ reservas, onPay, action }) {
+  return (
+    <Panel title="Gestión de reservas" tag={action}>
+      <Table>
+        <TableHeader>
+          <TableRow className="border-slate-200 hover:bg-transparent">
+            <Th>Reserva</Th><Th>Cliente</Th><Th>Paquete</Th><Th>Pax</Th>
+            <Th>Fecha viaje</Th><Th>Asesor</Th><Th>Estado</Th><Th>Acción</Th>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {reservas.map((r) => (
+            <TableRow key={r[0]} className="border-slate-100 hover:bg-sky-50">
+              <TableCell className="font-medium text-slate-800">{r[0]}</TableCell>
+              <TableCell>{r[1]}</TableCell>
+              <TableCell>{r[2]}</TableCell>
+              <TableCell>{r[3]}</TableCell>
+              <TableCell>{r[4]}</TableCell>
+              <TableCell>{r[5]}</TableCell>
+              <TableCell><Pill tone={r[6]}>{r[7]}</Pill></TableCell>
+              <TableCell>
+                {r[7] === "Pagada" ? (
+                  <span className="flex items-center gap-1 text-xs font-medium text-emerald-600"><Check className="h-4 w-4" />Pagada</span>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => onPay(r[0])}
+                    className="h-7 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50">
+                    <CreditCard className="h-3.5 w-3.5" />Pagar
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Panel>
+  );
+}
+
 function Paquetes({ paquetes }) {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -444,26 +442,129 @@ function Reportes() {
   );
 }
 
-/* --------------------------- Nuevo cliente (form) --------------------------- */
-function NewClienteDialog({ onCreate }) {
+/* --------------------------- Formularios por entidad --------------------------- */
+const hoy = () => new Date().toISOString().slice(0, 10);
+const n4 = () => Math.floor(1000 + Math.random() * 9000);
+const n6 = () => Math.floor(100000 + Math.random() * 900000);
+
+// Cada config: qué tabla, qué campos, y cómo construir el registro para BD y para la tabla.
+const FORMS = {
+  clientes: {
+    entity: "clientes", table: "clientes", label: "Nuevo cliente", title: "Registrar nuevo cliente",
+    fields: [
+      { key: "nombre", label: "Nombre completo", ph: "Ej. Juan García" },
+      { key: "documento", label: "Documento", ph: "Cédula", half: true },
+      { key: "telefono", label: "Teléfono", ph: "300 000 0000", half: true },
+      { key: "correo", label: "Correo", ph: "correo@mail.com", type: "email" },
+    ],
+    build: (v) => {
+      const codigo = "CL-" + n4();
+      return {
+        payload: { codigo, nombre: v.nombre, documento: v.documento, correo: v.correo, telefono: v.telefono, reservas: 0, tono: "warn", estado: "Nuevo" },
+        row: [codigo, v.nombre, v.documento, v.correo, v.telefono, 0, "warn", "Nuevo"],
+      };
+    },
+  },
+  reservas: {
+    entity: "reservas", table: "reservas", label: "Nueva reserva", title: "Registrar nueva reserva",
+    fields: [
+      { key: "cliente", label: "Cliente", select: "clientes" },
+      { key: "paquete", label: "Paquete", select: "paquetes" },
+      { key: "pax", label: "Pasajeros", ph: "2", type: "number", half: true },
+      { key: "fecha_viaje", label: "Fecha de viaje", type: "date", half: true },
+      { key: "asesor", label: "Asesor", select: ["Samuel P.", "Juan J.", "Andrés M."] },
+    ],
+    build: (v) => {
+      const codigo = "#RS-" + n4();
+      const pax = Number(v.pax) || 1;
+      return {
+        payload: { codigo, cliente: v.cliente, paquete: v.paquete, pax, fecha_viaje: v.fecha_viaje || null, asesor: v.asesor, tono: "info", estado: "En proceso" },
+        row: [codigo, v.cliente, v.paquete, pax, v.fecha_viaje || "—", v.asesor, "info", "En proceso"],
+      };
+    },
+  },
+  pagos: {
+    entity: "pagos", table: "pagos", label: "Registrar pago", title: "Registrar nuevo pago",
+    fields: [
+      { key: "reserva", label: "Reserva", select: "reservas", half: true },
+      { key: "cliente", label: "Cliente", select: "clientes", half: true },
+      { key: "metodo", label: "Método", select: ["Tarjeta crédito", "Transferencia", "PSE", "Efectivo", "Nequi"], half: true },
+      { key: "valor", label: "Valor", ph: "$ 1.000.000", half: true },
+    ],
+    build: (v) => {
+      const recibo = "#PG-" + n4();
+      return {
+        payload: { recibo, reserva: v.reserva, cliente: v.cliente, metodo: v.metodo, valor: v.valor, fecha: hoy(), tono: "warn", estado: "Abono" },
+        row: [recibo, v.reserva, v.cliente, v.metodo, v.valor, hoy(), "warn", "Abono"],
+      };
+    },
+  },
+  facturas: {
+    entity: "facturas", table: "facturas", label: "Emitir factura", title: "Emitir nueva factura",
+    fields: [
+      { key: "cliente", label: "Cliente", select: "clientes" },
+      { key: "nit", label: "NIT / CC", ph: "900.000.000-0", half: true },
+      { key: "reserva", label: "Reserva", select: "reservas", half: true },
+      { key: "valor", label: "Valor + IVA", ph: "$ 6.480.000" },
+    ],
+    build: (v) => {
+      const factura = "FE-" + n6();
+      return {
+        payload: { factura, cliente: v.cliente, nit: v.nit, reserva: v.reserva, valor: v.valor, fecha: hoy(), tono: "info", estado: "Enviada" },
+        row: [factura, v.cliente, v.nit, v.reserva, v.valor, hoy(), "info", "Enviada"],
+      };
+    },
+  },
+  proveedores: {
+    entity: "proveedores", table: "proveedores", label: "Nuevo proveedor", title: "Registrar nuevo proveedor",
+    fields: [
+      { key: "nombre", label: "Proveedor", ph: "Ej. Avianca" },
+      { key: "tipo", label: "Tipo", select: ["Aerolínea", "Hotelería", "Operador terrestre", "Naviera"], half: true },
+      { key: "convenio", label: "Convenio", ph: "Comisión 8%", half: true },
+      { key: "contacto", label: "Contacto", ph: "correo@proveedor.com" },
+    ],
+    build: (v) => ({
+      payload: { nombre: v.nombre, tipo: v.tipo, contacto: v.contacto, convenio: v.convenio, tono: "info", estado: "Nuevo" },
+      row: [v.nombre, v.tipo, v.contacto, v.convenio, "info", "Nuevo"],
+    }),
+  },
+  paquetes: {
+    entity: "paquetes", table: "paquetes", label: "Nuevo paquete", title: "Registrar nuevo paquete",
+    fields: [
+      { key: "nombre", label: "Nombre del paquete", ph: "Ej. Cancún Paraíso" },
+      { key: "loc", label: "Ubicación / duración", ph: "México · 7 días / 6 noches" },
+      { key: "precio", label: "Precio", ph: "$ 6.480.000", half: true },
+      { key: "cupo", label: "Cupos", ph: "Cupos: 12 / 40", half: true },
+      { key: "icono", label: "Ícono", select: ["umbrella", "landmark", "waves", "ferriswheel", "mountain", "building"] },
+    ],
+    build: (v) => {
+      const icono = v.icono || "umbrella";
+      return {
+        payload: { nombre: v.nombre, loc: v.loc, precio: v.precio, cupo: v.cupo, icono },
+        row: { iconKey: icono, n: v.nombre, loc: v.loc, precio: v.precio, cupo: v.cupo },
+      };
+    },
+  },
+};
+
+function AddDialog({ label, title, fields, onSubmit, selects = {} }) {
+  const empty = Object.fromEntries(fields.map((f) => [f.key, ""]));
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ nombre: "", documento: "", correo: "", telefono: "" });
+  const [v, setV] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k) => (e) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const setVal = (k, val) => setV((s) => ({ ...s, [k]: val }));
+  const optsOf = (f) => (Array.isArray(f.select) ? f.select : selects[f.select] || []);
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!f.nombre.trim()) { setError("El nombre es obligatorio."); return; }
+    const first = fields[0];
+    if (first && !String(v[first.key] || "").trim()) { setError(`${first.label} es obligatorio.`); return; }
     setSaving(true); setError("");
-    const codigo = "CL-" + Math.floor(1000 + Math.random() * 9000);
-    const payload = { codigo, ...f, reservas: 0, tono: "warn", estado: "Nuevo" };
     try {
-      if (isSupabaseReady) await insertCliente(payload);
-      onCreate([codigo, f.nombre, f.documento, f.correo, f.telefono, 0, "warn", "Nuevo"]);
-      setF({ nombre: "", documento: "", correo: "", telefono: "" });
-      setOpen(false);
+      await onSubmit(v);
+      setV(empty); setOpen(false);
     } catch (err) {
       setError("No se pudo guardar: " + err.message);
     } finally {
@@ -475,35 +576,38 @@ function NewClienteDialog({ onCreate }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="h-8 gap-1 bg-gradient-to-br from-sky-500 to-blue-600 text-white">
-          <Plus className="h-3.5 w-3.5" />Nuevo cliente
+          <Plus className="h-3.5 w-3.5" />{label}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Registrar nuevo cliente</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="nombre">Nombre completo</Label>
-            <Input id="nombre" value={f.nombre} onChange={set("nombre")} placeholder="Ej. Juan García" />
-          </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="doc">Documento</Label>
-              <Input id="doc" value={f.documento} onChange={set("documento")} placeholder="Cédula" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="tel">Teléfono</Label>
-              <Input id="tel" value={f.telefono} onChange={set("telefono")} placeholder="300 000 0000" />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="mail">Correo</Label>
-            <Input id="mail" type="email" value={f.correo} onChange={set("correo")} placeholder="correo@mail.com" />
+            {fields.map((f) => (
+              <div key={f.key} className={`space-y-1.5 ${f.half ? "" : "col-span-2"}`}>
+                <Label htmlFor={f.key}>{f.label}</Label>
+                {f.select ? (
+                  <Select value={v[f.key]} onValueChange={(val) => setVal(f.key, val)}>
+                    <SelectTrigger id={f.key} className="w-full">
+                      <SelectValue placeholder={`Selecciona ${f.label.toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {optsOf(f).length === 0
+                        ? <div className="px-2 py-1.5 text-sm text-slate-400">Sin opciones</div>
+                        : optsOf(f).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input id={f.key} type={f.type || "text"} value={v[f.key]} onChange={set(f.key)} placeholder={f.ph || ""} />
+                )}
+              </div>
+            ))}
           </div>
           {error && <p className="text-sm text-rose-500">{error}</p>}
           <DialogFooter className="gap-2 sm:gap-2">
             <DialogClose asChild><Button type="button" variant="outline">Cancelar</Button></DialogClose>
             <Button type="submit" disabled={saving} className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">
-              {saving ? "Guardando..." : "Guardar cliente"}
+              {saving ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
         </form>
@@ -543,30 +647,93 @@ function Shell({ onLogout }) {
   const { data, setData, source } = useEntities();
   const [t1, t2] = TITULOS[view];
 
-  const addCliente = (row) => setData((d) => ({ ...d, clientes: [row, ...d.clientes] }));
+  // Opciones para los menús desplegables (se arman con lo que ya existe)
+  const selects = {
+    clientes: data.clientes.map((c) => c[1]),
+    paquetes: data.paquetes.map((p) => p.n),
+    reservas: data.reservas.map((r) => r[0]),
+  };
+
+  const submitFor = (key) => async (values) => {
+    if (key === "reservas") return addReserva(values);
+    const cfg = FORMS[key];
+    const { payload, row } = cfg.build(values);
+    setData((d) => ({ ...d, [cfg.entity]: [row, ...d[cfg.entity]] }));
+    if (isSupabaseReady) {
+      try { await insertRow(cfg.table, payload); }
+      catch (err) { console.warn("No se persistió en Supabase:", err.message); }
+    }
+  };
+
+  // Nueva reserva -> arranca "Pendiente" y genera su factura automáticamente
+  const addReserva = async (values) => {
+    const { payload, row } = FORMS.reservas.build(values);
+    const rrow = [...row]; rrow[6] = "bad"; rrow[7] = "Pendiente";
+    const rpay = { ...payload, tono: "bad", estado: "Pendiente" };
+    const precio = data.paquetes.find((p) => p.n === values.paquete)?.precio || "$ 0";
+    const nit = data.clientes.find((c) => c[1] === values.cliente)?.[2] || "";
+    const factura = "FE-" + n6();
+    const frow = [factura, values.cliente, nit, payload.codigo, precio, hoy(), "warn", "Por validar"];
+    const fpay = { factura, cliente: values.cliente, nit, reserva: payload.codigo, valor: precio, fecha: hoy(), tono: "warn", estado: "Por validar" };
+    setData((d) => ({ ...d, reservas: [rrow, ...d.reservas], facturas: [frow, ...d.facturas] }));
+    if (isSupabaseReady) {
+      try { await insertRow("reservas", rpay); await insertRow("facturas", fpay); }
+      catch (err) { console.warn("No se persistió en Supabase:", err.message); }
+    }
+  };
+
+  // Pagar -> registra el pago, marca la reserva "Pagada" y su factura "Aceptada"
+  const payReserva = async (code) => {
+    const r = data.reservas.find((x) => x[0] === code);
+    if (!r) return;
+    const valor = data.facturas.find((x) => x[3] === code)?.[4] || "$ 0";
+    const recibo = "#PG-" + n4();
+    const pgrow = [recibo, code, r[1], "Tarjeta crédito", valor, hoy(), "ok", "Pagado"];
+    setData((d) => ({
+      ...d,
+      pagos: [pgrow, ...d.pagos],
+      reservas: d.reservas.map((x) => (x[0] === code ? [...x.slice(0, 6), "ok", "Pagada"] : x)),
+      facturas: d.facturas.map((x) => (x[3] === code ? [...x.slice(0, 6), "ok", "Aceptada"] : x)),
+    }));
+    if (isSupabaseReady) {
+      try {
+        await insertRow("pagos", { recibo, reserva: code, cliente: r[1], metodo: "Tarjeta crédito", valor, fecha: hoy(), tono: "ok", estado: "Pagado" });
+        await updateRows("reservas", "codigo", code, { tono: "ok", estado: "Pagada" });
+        await updateRows("facturas", "reserva", code, { tono: "ok", estado: "Aceptada" });
+      } catch (err) { console.warn("No se persistió en Supabase:", err.message); }
+    }
+  };
+
+  const addAction = (key) => (
+    <AddDialog label={FORMS[key].label} title={FORMS[key].title} fields={FORMS[key].fields} onSubmit={submitFor(key)} selects={selects} />
+  );
 
   const render = () => {
     switch (view) {
       case "dash": return <Dashboard reservas={data.reservas} />;
       case "clientes":
-        return <DataView title="Clientes registrados" action={<NewClienteDialog onCreate={addCliente} />}
+        return <DataView title="Clientes registrados" action={addAction("clientes")}
           cols={["ID", "Nombre", "Documento", "Correo", "Teléfono", "Reservas", "Estado"]}
           rows={data.clientes.map((c) => [c[0], c[1], c[2], c[3], c[4], c[5], { tone: c[6], text: c[7] }])} />;
-      case "paquetes": return <Paquetes paquetes={data.paquetes} />;
+      case "paquetes":
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-end">{addAction("paquetes")}</div>
+            <Paquetes paquetes={data.paquetes} />
+          </div>
+        );
       case "reservas":
-        return <DataView title="Gestión de reservas" cta="Nueva reserva"
-          cols={["Reserva", "Cliente", "Paquete", "Pax", "Fecha viaje", "Asesor", "Estado"]}
-          rows={data.reservas.map((r) => [r[0], r[1], r[2], r[3], r[4], r[5], { tone: r[6], text: r[7] }])} />;
+        return <ReservasView reservas={data.reservas} onPay={payReserva} action={addAction("reservas")} />;
       case "pagos":
-        return <DataView title="Registro de pagos"
+        return <DataView title="Registro de pagos" action={addAction("pagos")}
           cols={["Recibo", "Reserva", "Cliente", "Método", "Valor", "Fecha", "Estado"]}
           rows={data.pagos.map((r) => [r[0], r[1], r[2], r[3], r[4], r[5], { tone: r[6], text: r[7] }])} />;
       case "facturas":
-        return <DataView title="Facturación electrónica" cta="Emitir factura"
+        return <DataView title="Facturación electrónica" action={addAction("facturas")}
           cols={["Factura", "Cliente", "NIT / CC", "Reserva", "Valor + IVA", "Fecha", "Estado DIAN"]}
           rows={data.facturas.map((r) => [r[0], r[1], r[2], r[3], r[4], r[5], { tone: r[6], text: r[7] }])} />;
       case "proveedores":
-        return <DataView title="Proveedores y operadores" cta="Nuevo proveedor"
+        return <DataView title="Proveedores y operadores" action={addAction("proveedores")}
           cols={["Proveedor", "Tipo", "Contacto", "Convenio", "Estado"]}
           rows={data.proveedores.map((r) => [r[0], r[1], r[2], r[3], { tone: r[4], text: r[5] }])} />;
       case "reportes": return <Reportes />;

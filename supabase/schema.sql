@@ -1,125 +1,256 @@
 -- ============================================================
---  NóvaTravel · Esquema de base de datos (Supabase / PostgreSQL)
---  Ejecutar en: Supabase → SQL Editor → New query → Run
+--  NóvaTravel · Esquema + datos (Supabase / PostgreSQL)
+--  Ejecutar en: Supabase -> SQL Editor -> New query -> Run
 -- ============================================================
-
--- Limpieza (para reejecutar sin errores)
 drop table if exists clientes, paquetes, reservas, pagos, facturas, proveedores cascade;
 
--- --------------------------- Tablas ---------------------------
 create table clientes (
-  id         bigint generated always as identity primary key,
-  codigo     text unique not null,
-  nombre     text not null,
-  documento  text,
-  correo     text,
-  telefono   text,
-  reservas   int  default 0,
-  tono       text default 'warn',   -- ok | warn | bad | info
-  estado     text default 'Nuevo',
-  created_at timestamptz default now()
-);
-
+  id bigint generated always as identity primary key,
+  codigo text unique not null, nombre text not null, documento text,
+  correo text, telefono text, reservas int default 0,
+  tono text default 'warn', estado text default 'Nuevo', created_at timestamptz default now());
 create table paquetes (
-  id      bigint generated always as identity primary key,
-  nombre  text not null,
-  loc     text,
-  precio  text,
-  cupo    text,
-  icono   text default 'umbrella'   -- umbrella|landmark|waves|ferriswheel|mountain|building
-);
-
+  id bigint generated always as identity primary key,
+  nombre text not null, loc text, precio text, cupo text, icono text default 'umbrella');
 create table reservas (
-  id          bigint generated always as identity primary key,
-  codigo      text unique not null,
-  cliente     text,
-  paquete     text,
-  pax         int,
-  fecha_viaje date,
-  asesor      text,
-  tono        text default 'info',
-  estado      text default 'En proceso'
-);
-
+  id bigint generated always as identity primary key,
+  codigo text unique not null, cliente text, paquete text, pax int,
+  fecha_viaje date, asesor text, tono text default 'info', estado text default 'En proceso');
 create table pagos (
-  id      bigint generated always as identity primary key,
-  recibo  text unique not null,
-  reserva text,
-  cliente text,
-  metodo  text,
-  valor   text,
-  fecha   date,
-  tono    text default 'ok',
-  estado  text default 'Pagado'
-);
-
+  id bigint generated always as identity primary key,
+  recibo text unique not null, reserva text, cliente text, metodo text,
+  valor text, fecha date, tono text default 'ok', estado text default 'Pagado');
 create table facturas (
-  id      bigint generated always as identity primary key,
-  factura text unique not null,
-  cliente text,
-  nit     text,
-  reserva text,
-  valor   text,
-  fecha   date,
-  tono    text default 'info',
-  estado  text default 'Enviada'
-);
-
+  id bigint generated always as identity primary key,
+  factura text unique not null, cliente text, nit text, reserva text,
+  valor text, fecha date, tono text default 'info', estado text default 'Enviada');
 create table proveedores (
-  id       bigint generated always as identity primary key,
-  nombre   text not null,
-  tipo     text,
-  contacto text,
-  convenio text,
-  tono     text default 'ok',
-  estado   text default 'Activo'
-);
+  id bigint generated always as identity primary key,
+  nombre text not null, tipo text, contacto text, convenio text,
+  tono text default 'ok', estado text default 'Activo');
 
--- --------------------- Datos de ejemplo ----------------------
 insert into clientes (codigo, nombre, documento, correo, telefono, reservas, tono, estado) values
- ('CL-0031','María Restrepo','43.118.902','maria.r@mail.com','310 555 8841',7,'ok','Frecuente'),
- ('CL-0032','Carlos Gómez','71.204.663','c.gomez@mail.com','301 442 1290',3,'info','Activo'),
- ('CL-0033','Laura Muñoz','1.017.554.210','laura.m@mail.com','312 908 7756',2,'info','Activo'),
- ('CL-0034','Andrés Vélez','98.552.117','a.velez@mail.com','314 220 3341',5,'ok','Frecuente'),
- ('CL-0035','Sofía Álvarez','1.037.889.004','sofia.a@mail.com','300 771 4420',1,'warn','Nuevo');
+ ('CL-0031', 'Santiago Gómez', '32.328.242', 'santiago.gomez@mail.com', '321 792 9935', 1, 'info', 'Activo'),
+ ('CL-0032', 'Jerónimo Bedoya', '4.195.323', 'jeronimo.bedoya@mail.com', '308 716 1434', 8, 'ok', 'Frecuente'),
+ ('CL-0033', 'Daniela Cortés', '29.559.703', 'daniela.cortes@mail.com', '310 877 3615', 6, 'warn', 'Nuevo'),
+ ('CL-0034', 'Felipe Gil', '28.881.444', 'felipe.gil@mail.com', '301 489 2584', 5, 'info', 'Activo'),
+ ('CL-0035', 'Antonia Serna', '6.847.570', 'antonia.serna@mail.com', '321 487 2291', 8, 'info', 'Activo'),
+ ('CL-0036', 'Sara Pérez', '74.296.821', 'sara.perez@mail.com', '300 777 4733', 4, 'info', 'Activo'),
+ ('CL-0037', 'Juan Betancur', '49.384.564', 'juan.betancur@mail.com', '325 266 7065', 5, 'ok', 'Frecuente'),
+ ('CL-0038', 'Nicolás Gil', '78.750.275', 'nicolas.gil@mail.com', '323 267 8573', 6, 'ok', 'Frecuente'),
+ ('CL-0039', 'Samuel Bran', '88.432.963', 'samuel.bran@mail.com', '303 941 1525', 5, 'info', 'Activo'),
+ ('CL-0040', 'Tomás Gil', '28.680.997', 'tomas.gil@mail.com', '325 317 9179', 6, 'ok', 'Frecuente'),
+ ('CL-0041', 'Emiliano Zapata', '18.352.862', 'emiliano.zapata@mail.com', '328 369 8019', 9, 'info', 'Activo'),
+ ('CL-0042', 'Tomás Salazar', '18.621.605', 'tomas.salazar@mail.com', '300 981 2796', 2, 'info', 'Activo'),
+ ('CL-0043', 'Isabella Bedoya', '50.490.710', 'isabella.bedoya@mail.com', '318 357 1188', 1, 'ok', 'Frecuente'),
+ ('CL-0044', 'Valeria Gil', '15.400.545', 'valeria.gil@mail.com', '307 103 5315', 8, 'info', 'Activo'),
+ ('CL-0045', 'Mateo Naranjo', '81.405.961', 'mateo.naranjo@mail.com', '328 723 4258', 2, 'ok', 'Frecuente'),
+ ('CL-0046', 'Emmanuel Arango', '77.431.600', 'emmanuel.arango@mail.com', '301 471 6038', 3, 'ok', 'Frecuente'),
+ ('CL-0047', 'Andrés Mejía', '11.849.597', 'andres.mejia@mail.com', '308 884 3060', 2, 'ok', 'Frecuente'),
+ ('CL-0048', 'Paula Bran', '34.640.993', 'paula.bran@mail.com', '326 316 9835', 3, 'info', 'Activo'),
+ ('CL-0049', 'David Marín', '57.629.562', 'david.marin@mail.com', '303 330 2049', 5, 'info', 'Activo'),
+ ('CL-0050', 'Carlos Toro', '76.325.107', 'carlos.toro@mail.com', '300 334 2104', 0, 'info', 'Activo'),
+ ('CL-0051', 'Felipe Álvarez', '36.785.597', 'felipe.alvarez@mail.com', '308 235 8744', 3, 'info', 'Activo'),
+ ('CL-0052', 'Paula Castaño', '13.199.774', 'paula.castano@mail.com', '315 533 7735', 7, 'info', 'Activo'),
+ ('CL-0053', 'Andrés Ramírez', '52.845.447', 'andres.ramirez@mail.com', '303 296 4116', 8, 'ok', 'Frecuente'),
+ ('CL-0054', 'Juliana Cardona', '24.385.573', 'juliana.cardona@mail.com', '301 553 2604', 0, 'warn', 'Nuevo'),
+ ('CL-0055', 'Valeria Restrepo', '97.969.342', 'valeria.restrepo@mail.com', '306 597 8886', 3, 'ok', 'Frecuente'),
+ ('CL-0056', 'Tomás Vélez', '49.102.499', 'tomas.velez@mail.com', '317 392 7930', 8, 'info', 'Activo'),
+ ('CL-0057', 'Diego Zapata', '38.322.159', 'diego.zapata@mail.com', '328 162 6138', 0, 'info', 'Activo'),
+ ('CL-0058', 'Andrés Toro', '65.973.643', 'andres.toro@mail.com', '300 620 2312', 2, 'warn', 'Nuevo'),
+ ('CL-0059', 'Sofía Serna', '87.982.340', 'sofia.serna@mail.com', '311 683 5033', 9, 'ok', 'Frecuente'),
+ ('CL-0060', 'Renata Muñoz', '54.773.697', 'renata.munoz@mail.com', '328 423 5272', 3, 'ok', 'Frecuente'),
+ ('CL-0061', 'Manuela Mejía', '51.234.787', 'manuela.mejia@mail.com', '324 568 6180', 1, 'info', 'Activo'),
+ ('CL-0062', 'María Londoño', '10.650.318', 'maria.londono@mail.com', '324 235 6718', 1, 'ok', 'Frecuente'),
+ ('CL-0063', 'Alejandro Salazar', '21.548.953', 'alejandro.salazar@mail.com', '324 726 9666', 0, 'info', 'Activo'),
+ ('CL-0064', 'Miguel Montoya', '18.370.218', 'miguel.montoya@mail.com', '308 259 5462', 4, 'ok', 'Frecuente'),
+ ('CL-0065', 'Renata Jaramillo', '27.803.749', 'renata.jaramillo@mail.com', '318 600 5114', 0, 'info', 'Activo');
 
 insert into paquetes (nombre, loc, precio, cupo, icono) values
- ('Cancún Paraíso','México · 7 días / 6 noches','$ 6.480.000','Cupos: 12 / 40 · Todo incluido','umbrella'),
- ('Madrid Imperial','España · 8 días / 7 noches','$ 9.120.000','Cupos: 5 / 25 · Vuelo + hotel','landmark'),
- ('San Andrés Mar','Colombia · 4 días / 3 noches','$ 2.750.000','Cupos: 20 / 50 · Con snorkel','waves'),
- ('Orlando Familiar','USA · 9 días / 8 noches','$ 14.300.000','Cupos: 3 / 30 · Parques incluidos','ferriswheel'),
- ('Cusco Ancestral','Perú · 6 días / 5 noches','$ 5.900.000','Cupos: 8 / 20 · Machu Picchu','mountain'),
- ('París Romántico','Francia · 7 días / 6 noches','$ 11.450.000','Cupos: 6 / 24 · City tour','building');
+ ('Cancún Paraíso', 'México · 7 días / 6 noches', '$ 6.480.000', 'Cupos: 15 / 20 · Con traslados', 'umbrella'),
+ ('Madrid Imperial', 'España · 8 días / 7 noches', '$ 9.120.000', 'Cupos: 2 / 20 · Con traslados', 'landmark'),
+ ('San Andrés Mar', 'Colombia · 4 días / 3 noches', '$ 2.750.000', 'Cupos: 22 / 24 · Con traslados', 'waves'),
+ ('Orlando Familiar', 'USA · 9 días / 8 noches', '$ 14.300.000', 'Cupos: 16 / 24 · City tour', 'ferriswheel'),
+ ('Cusco Ancestral', 'Perú · 6 días / 5 noches', '$ 5.900.000', 'Cupos: 29 / 50 · City tour', 'mountain'),
+ ('París Romántico', 'Francia · 7 días / 6 noches', '$ 11.450.000', 'Cupos: 5 / 20 · Todo incluido', 'building'),
+ ('Punta Cana Caribe', 'Rep. Dominicana · 6 días / 5 noches', '$ 5.200.000', 'Cupos: 11 / 50 · City tour', 'umbrella'),
+ ('Roma Clásica', 'Italia · 8 días / 7 noches', '$ 10.800.000', 'Cupos: 13 / 20 · City tour', 'landmark'),
+ ('Cartagena Colonial', 'Colombia · 4 días / 3 noches', '$ 1.980.000', 'Cupos: 11 / 40 · Desayuno incluido', 'building'),
+ ('Nueva York Urbano', 'USA · 7 días / 6 noches', '$ 12.600.000', 'Cupos: 3 / 24 · Con traslados', 'ferriswheel'),
+ ('Londres Real', 'Reino Unido · 8 días / 7 noches', '$ 13.200.000', 'Cupos: 3 / 25 · Con traslados', 'landmark'),
+ ('Río Carnaval', 'Brasil · 6 días / 5 noches', '$ 6.800.000', 'Cupos: 23 / 24 · Vuelo + hotel', 'waves'),
+ ('Tokio Neón', 'Japón · 10 días / 9 noches', '$ 18.900.000', 'Cupos: 8 / 50 · Con traslados', 'building'),
+ ('Santa Marta Tayrona', 'Colombia · 5 días / 4 noches', '$ 2.400.000', 'Cupos: 28 / 40 · City tour', 'mountain'),
+ ('Aruba Sol', 'Aruba · 6 días / 5 noches', '$ 5.600.000', 'Cupos: 11 / 50 · Vuelo + hotel', 'umbrella'),
+ ('Barcelona Gaudí', 'España · 7 días / 6 noches', '$ 9.800.000', 'Cupos: 7 / 24 · Desayuno incluido', 'landmark'),
+ ('Machu Picchu Trek', 'Perú · 7 días / 6 noches', '$ 7.100.000', 'Cupos: 7 / 20 · Con seguro', 'mountain'),
+ ('Miami Beach', 'USA · 6 días / 5 noches', '$ 7.900.000', 'Cupos: 15 / 25 · Con seguro', 'umbrella'),
+ ('Ámsterdam Canales', 'Países Bajos · 7 días / 6 noches', '$ 10.200.000', 'Cupos: 17 / 50 · Con traslados', 'waves'),
+ ('Dubái Lujo', 'EAU · 8 días / 7 noches', '$ 16.400.000', 'Cupos: 24 / 24 · Todo incluido', 'building'),
+ ('Eje Cafetero', 'Colombia · 4 días / 3 noches', '$ 1.750.000', 'Cupos: 29 / 30 · Todo incluido', 'mountain'),
+ ('Cancún Xcaret', 'México · 6 días / 5 noches', '$ 6.100.000', 'Cupos: 9 / 30 · Vuelo + hotel', 'ferriswheel'),
+ ('Praga Medieval', 'Chequia · 7 días / 6 noches', '$ 9.400.000', 'Cupos: 13 / 30 · Con traslados', 'landmark'),
+ ('Bariloche Nieve', 'Argentina · 7 días / 6 noches', '$ 6.900.000', 'Cupos: 9 / 24 · Todo incluido', 'mountain'),
+ ('Grecia Islas', 'Grecia · 9 días / 8 noches', '$ 13.800.000', 'Cupos: 14 / 50 · Desayuno incluido', 'waves'),
+ ('Lisboa Atlántica', 'Portugal · 7 días / 6 noches', '$ 8.900.000', 'Cupos: 10 / 25 · Todo incluido', 'building'),
+ ('Cancún Adults', 'México · 5 días / 4 noches', '$ 5.400.000', 'Cupos: 13 / 25 · Con seguro', 'umbrella'),
+ ('Las Vegas Show', 'USA · 6 días / 5 noches', '$ 9.600.000', 'Cupos: 27 / 40 · Con seguro', 'ferriswheel'),
+ ('Estambul Puente', 'Turquía · 8 días / 7 noches', '$ 11.200.000', 'Cupos: 23 / 40 · Todo incluido', 'landmark'),
+ ('Bora Bora Sueño', 'Polinesia · 9 días / 8 noches', '$ 24.500.000', 'Cupos: 10 / 20 · Vuelo + hotel', 'waves'),
+ ('Guatapé Piedra', 'Colombia · 3 días / 2 noches', '$ 1.250.000', 'Cupos: 18 / 40 · Todo incluido', 'mountain'),
+ ('Toronto Otoño', 'Canadá · 8 días / 7 noches', '$ 12.900.000', 'Cupos: 15 / 20 · Con traslados', 'building'),
+ ('Cancún Isla Mujeres', 'México · 6 días / 5 noches', '$ 6.300.000', 'Cupos: 22 / 50 · Desayuno incluido', 'waves'),
+ ('Viena Musical', 'Austria · 7 días / 6 noches', '$ 10.600.000', 'Cupos: 34 / 40 · Todo incluido', 'landmark'),
+ ('Panamá Ciudad', 'Panamá · 5 días / 4 noches', '$ 4.300.000', 'Cupos: 30 / 30 · City tour', 'building');
 
 insert into reservas (codigo, cliente, paquete, pax, fecha_viaje, asesor, tono, estado) values
- ('#RS-20841','María Restrepo','Cancún Paraíso',2,'2026-10-12','Samuel P.','ok','Confirmada'),
- ('#RS-20840','Carlos Gómez','Madrid Imperial',1,'2026-11-03','Juan J.','warn','Pago parcial'),
- ('#RS-20839','Laura Muñoz','San Andrés Mar',3,'2026-10-01','Andrés M.','ok','Confirmada'),
- ('#RS-20838','Andrés Vélez','Orlando Familiar',4,'2026-12-20','Samuel P.','info','En proceso'),
- ('#RS-20837','Sofía Álvarez','Cusco Ancestral',2,'2026-10-28','Juan J.','bad','Pendiente');
+ ('#RS-20800', 'Isabella Bedoya', 'Machu Picchu Trek', 6, '2026-07-01', 'Andrés M.', 'ok', 'Confirmada'),
+ ('#RS-20801', 'Renata Jaramillo', 'Tokio Neón', 4, '2026-02-22', 'Juan J.', 'info', 'En proceso'),
+ ('#RS-20802', 'Felipe Álvarez', 'Roma Clásica', 5, '2026-05-22', 'Juan J.', 'info', 'En proceso'),
+ ('#RS-20803', 'Felipe Álvarez', 'Lisboa Atlántica', 5, '2026-03-07', 'Juan J.', 'info', 'En proceso'),
+ ('#RS-20804', 'Valeria Restrepo', 'Río Carnaval', 5, '2026-05-13', 'Andrés M.', 'ok', 'Confirmada'),
+ ('#RS-20805', 'Santiago Gómez', 'Dubái Lujo', 2, '2026-07-26', 'Andrés M.', 'info', 'En proceso'),
+ ('#RS-20806', 'Felipe Álvarez', 'Bora Bora Sueño', 4, '2026-11-07', 'Andrés M.', 'bad', 'Pendiente'),
+ ('#RS-20807', 'Manuela Mejía', 'Londres Real', 3, '2026-09-22', 'Andrés M.', 'ok', 'Confirmada'),
+ ('#RS-20808', 'Paula Castaño', 'París Romántico', 6, '2026-05-08', 'Samuel P.', 'warn', 'Pago parcial'),
+ ('#RS-20809', 'Tomás Gil', 'Madrid Imperial', 2, '2026-08-20', 'Samuel P.', 'ok', 'Confirmada'),
+ ('#RS-20810', 'Renata Muñoz', 'Cancún Adults', 2, '2026-12-23', 'Juan J.', 'ok', 'Confirmada'),
+ ('#RS-20811', 'María Londoño', 'Lisboa Atlántica', 2, '2026-11-23', 'Samuel P.', 'warn', 'Pago parcial'),
+ ('#RS-20812', 'Juan Betancur', 'Las Vegas Show', 2, '2026-12-17', 'Juan J.', 'warn', 'Pago parcial'),
+ ('#RS-20813', 'Felipe Gil', 'Barcelona Gaudí', 4, '2026-03-26', 'Juan J.', 'ok', 'Confirmada'),
+ ('#RS-20814', 'Miguel Montoya', 'Eje Cafetero', 5, '2026-12-17', 'Juan J.', 'bad', 'Pendiente'),
+ ('#RS-20815', 'Sofía Serna', 'Londres Real', 4, '2026-05-25', 'Samuel P.', 'bad', 'Pendiente'),
+ ('#RS-20816', 'Paula Bran', 'Viena Musical', 6, '2026-04-09', 'Juan J.', 'bad', 'Pendiente'),
+ ('#RS-20817', 'Antonia Serna', 'Ámsterdam Canales', 3, '2026-06-11', 'Andrés M.', 'warn', 'Pago parcial'),
+ ('#RS-20818', 'Sara Pérez', 'Cartagena Colonial', 2, '2026-07-23', 'Samuel P.', 'warn', 'Pago parcial'),
+ ('#RS-20819', 'Valeria Gil', 'Cusco Ancestral', 4, '2026-06-18', 'Juan J.', 'bad', 'Pendiente'),
+ ('#RS-20820', 'Diego Zapata', 'Orlando Familiar', 4, '2026-07-25', 'Andrés M.', 'warn', 'Pago parcial'),
+ ('#RS-20821', 'Jerónimo Bedoya', 'Grecia Islas', 1, '2026-06-10', 'Juan J.', 'bad', 'Pendiente'),
+ ('#RS-20822', 'Diego Zapata', 'Panamá Ciudad', 5, '2026-04-16', 'Samuel P.', 'ok', 'Confirmada'),
+ ('#RS-20823', 'Paula Bran', 'Las Vegas Show', 1, '2026-07-11', 'Andrés M.', 'bad', 'Pendiente'),
+ ('#RS-20824', 'Tomás Vélez', 'Londres Real', 2, '2026-10-18', 'Samuel P.', 'bad', 'Pendiente'),
+ ('#RS-20825', 'Tomás Vélez', 'Madrid Imperial', 6, '2026-07-05', 'Juan J.', 'ok', 'Confirmada'),
+ ('#RS-20826', 'Tomás Salazar', 'Orlando Familiar', 4, '2026-06-07', 'Juan J.', 'info', 'En proceso'),
+ ('#RS-20827', 'Felipe Álvarez', 'Cancún Xcaret', 3, '2026-07-09', 'Samuel P.', 'bad', 'Pendiente'),
+ ('#RS-20828', 'Manuela Mejía', 'Madrid Imperial', 1, '2026-06-08', 'Andrés M.', 'ok', 'Confirmada'),
+ ('#RS-20829', 'Antonia Serna', 'San Andrés Mar', 2, '2026-04-27', 'Samuel P.', 'ok', 'Confirmada'),
+ ('#RS-20830', 'Tomás Gil', 'Barcelona Gaudí', 4, '2026-11-04', 'Andrés M.', 'warn', 'Pago parcial'),
+ ('#RS-20831', 'Valeria Gil', 'Bora Bora Sueño', 3, '2026-03-20', 'Andrés M.', 'info', 'En proceso'),
+ ('#RS-20832', 'Nicolás Gil', 'Londres Real', 1, '2026-10-01', 'Juan J.', 'info', 'En proceso'),
+ ('#RS-20833', 'Valeria Restrepo', 'Lisboa Atlántica', 1, '2026-10-23', 'Andrés M.', 'warn', 'Pago parcial'),
+ ('#RS-20834', 'Emmanuel Arango', 'Punta Cana Caribe', 6, '2026-10-26', 'Samuel P.', 'info', 'En proceso');
 
 insert into pagos (recibo, reserva, cliente, metodo, valor, fecha, tono, estado) values
- ('#PG-9912','#RS-20841','María Restrepo','Tarjeta crédito','$ 6.480.000','2026-09-23','ok','Pagado'),
- ('#PG-9911','#RS-20840','Carlos Gómez','Transferencia','$ 4.500.000','2026-09-23','warn','Abono 50%'),
- ('#PG-9910','#RS-20839','Laura Muñoz','PSE','$ 2.750.000','2026-09-22','ok','Pagado'),
- ('#PG-9909','#RS-20837','Sofía Álvarez','Efectivo','$ 1.000.000','2026-09-22','warn','Abono');
+ ('#PG-9800', '#RS-20802', 'Felipe Álvarez', 'Nequi', '$ 9.600.000', '2026-11-12', 'ok', 'Pagado'),
+ ('#PG-9801', '#RS-20804', 'Valeria Restrepo', 'Tarjeta crédito', '$ 5.400.000', '2026-08-04', 'ok', 'Pagado'),
+ ('#PG-9802', '#RS-20827', 'Felipe Álvarez', 'Efectivo', '$ 12.600.000', '2026-07-06', 'ok', 'Pagado'),
+ ('#PG-9803', '#RS-20833', 'Valeria Restrepo', 'Nequi', '$ 4.300.000', '2026-08-15', 'ok', 'Pagado'),
+ ('#PG-9804', '#RS-20827', 'Felipe Álvarez', 'PSE', '$ 9.800.000', '2026-02-09', 'ok', 'Pagado'),
+ ('#PG-9805', '#RS-20828', 'Manuela Mejía', 'Efectivo', '$ 13.800.000', '2026-06-01', 'warn', 'Abono 50%'),
+ ('#PG-9806', '#RS-20831', 'Valeria Gil', 'Transferencia', '$ 12.900.000', '2026-04-12', 'ok', 'Pagado'),
+ ('#PG-9807', '#RS-20816', 'Paula Bran', 'PSE', '$ 7.900.000', '2026-09-01', 'ok', 'Pagado'),
+ ('#PG-9808', '#RS-20833', 'Valeria Restrepo', 'Tarjeta crédito', '$ 9.800.000', '2026-12-14', 'warn', 'Abono 50%'),
+ ('#PG-9809', '#RS-20831', 'Valeria Gil', 'Efectivo', '$ 12.900.000', '2026-08-26', 'warn', 'Abono 50%'),
+ ('#PG-9810', '#RS-20801', 'Renata Jaramillo', 'PSE', '$ 5.600.000', '2026-07-23', 'ok', 'Pagado'),
+ ('#PG-9811', '#RS-20815', 'Sofía Serna', 'Nequi', '$ 6.900.000', '2026-08-18', 'ok', 'Pagado'),
+ ('#PG-9812', '#RS-20833', 'Valeria Restrepo', 'Efectivo', '$ 6.100.000', '2026-06-23', 'ok', 'Pagado'),
+ ('#PG-9813', '#RS-20829', 'Antonia Serna', 'PSE', '$ 7.100.000', '2026-04-04', 'ok', 'Pagado'),
+ ('#PG-9814', '#RS-20812', 'Juan Betancur', 'Tarjeta crédito', '$ 4.300.000', '2026-12-06', 'ok', 'Pagado'),
+ ('#PG-9815', '#RS-20812', 'Juan Betancur', 'Efectivo', '$ 7.900.000', '2026-12-19', 'warn', 'Abono 50%'),
+ ('#PG-9816', '#RS-20833', 'Valeria Restrepo', 'Tarjeta crédito', '$ 18.900.000', '2026-05-08', 'ok', 'Pagado'),
+ ('#PG-9817', '#RS-20823', 'Paula Bran', 'PSE', '$ 6.480.000', '2026-12-18', 'warn', 'Abono 50%'),
+ ('#PG-9818', '#RS-20808', 'Paula Castaño', 'Tarjeta crédito', '$ 14.300.000', '2026-09-10', 'ok', 'Pagado'),
+ ('#PG-9819', '#RS-20808', 'Paula Castaño', 'Tarjeta crédito', '$ 6.480.000', '2026-10-10', 'warn', 'Abono'),
+ ('#PG-9820', '#RS-20830', 'Tomás Gil', 'Efectivo', '$ 6.100.000', '2026-03-02', 'warn', 'Abono'),
+ ('#PG-9821', '#RS-20816', 'Paula Bran', 'Tarjeta crédito', '$ 5.900.000', '2026-07-16', 'warn', 'Abono'),
+ ('#PG-9822', '#RS-20804', 'Valeria Restrepo', 'Transferencia', '$ 12.600.000', '2026-10-10', 'ok', 'Pagado'),
+ ('#PG-9823', '#RS-20805', 'Santiago Gómez', 'Tarjeta crédito', '$ 5.400.000', '2026-10-20', 'warn', 'Abono 50%'),
+ ('#PG-9824', '#RS-20814', 'Miguel Montoya', 'Efectivo', '$ 11.200.000', '2026-05-28', 'warn', 'Abono'),
+ ('#PG-9825', '#RS-20827', 'Felipe Álvarez', 'Nequi', '$ 14.300.000', '2026-10-24', 'ok', 'Pagado'),
+ ('#PG-9826', '#RS-20806', 'Felipe Álvarez', 'Transferencia', '$ 7.100.000', '2026-11-03', 'warn', 'Abono 50%'),
+ ('#PG-9827', '#RS-20810', 'Renata Muñoz', 'Transferencia', '$ 5.900.000', '2026-03-01', 'warn', 'Abono 50%'),
+ ('#PG-9828', '#RS-20826', 'Tomás Salazar', 'Nequi', '$ 1.250.000', '2026-05-02', 'warn', 'Abono'),
+ ('#PG-9829', '#RS-20814', 'Miguel Montoya', 'PSE', '$ 24.500.000', '2026-02-22', 'ok', 'Pagado'),
+ ('#PG-9830', '#RS-20814', 'Miguel Montoya', 'Nequi', '$ 18.900.000', '2026-07-04', 'ok', 'Pagado'),
+ ('#PG-9831', '#RS-20834', 'Emmanuel Arango', 'Transferencia', '$ 7.900.000', '2026-03-03', 'warn', 'Abono 50%'),
+ ('#PG-9832', '#RS-20803', 'Felipe Álvarez', 'PSE', '$ 10.200.000', '2026-08-04', 'warn', 'Abono 50%'),
+ ('#PG-9833', '#RS-20829', 'Antonia Serna', 'Efectivo', '$ 7.900.000', '2026-09-18', 'ok', 'Pagado'),
+ ('#PG-9834', '#RS-20831', 'Valeria Gil', 'Tarjeta crédito', '$ 2.750.000', '2026-07-24', 'warn', 'Abono');
 
 insert into facturas (factura, cliente, nit, reserva, valor, fecha, tono, estado) values
- ('FE-004821','María Restrepo','43.118.902','#RS-20841','$ 6.480.000','2026-09-23','ok','Aceptada'),
- ('FE-004820','Laura Muñoz','1.017.554.210','#RS-20839','$ 2.750.000','2026-09-22','ok','Aceptada'),
- ('FE-004819','Carlos Gómez','71.204.663','#RS-20840','$ 4.500.000','2026-09-23','info','Enviada'),
- ('FE-004818','Viajes Corp S.A.S','900.552.118-4','#RS-20835','$ 22.900.000','2026-09-21','warn','Por validar');
+ ('FE-004820', 'Felipe Álvarez', '36.785.597', '#RS-20816', '$ 11.450.000', '2026-04-22', 'ok', 'Aceptada'),
+ ('FE-004821', 'Jerónimo Bedoya', '4.195.323', '#RS-20817', '$ 6.800.000', '2026-08-17', 'ok', 'Aceptada'),
+ ('FE-004822', 'Sofía Serna', '87.982.340', '#RS-20817', '$ 9.600.000', '2026-11-27', 'ok', 'Aceptada'),
+ ('FE-004823', 'María Londoño', '10.650.318', '#RS-20805', '$ 9.400.000', '2026-07-11', 'warn', 'Por validar'),
+ ('FE-004824', 'Felipe Álvarez', '36.785.597', '#RS-20806', '$ 6.100.000', '2026-07-23', 'ok', 'Aceptada'),
+ ('FE-004825', 'María Londoño', '10.650.318', '#RS-20818', '$ 2.750.000', '2026-08-03', 'warn', 'Por validar'),
+ ('FE-004826', 'Felipe Álvarez', '36.785.597', '#RS-20816', '$ 10.800.000', '2026-07-28', 'info', 'Enviada'),
+ ('FE-004827', 'Alejandro Salazar', '21.548.953', '#RS-20800', '$ 5.400.000', '2026-01-07', 'warn', 'Por validar'),
+ ('FE-004828', 'Miguel Montoya', '18.370.218', '#RS-20823', '$ 11.200.000', '2026-01-07', 'warn', 'Por validar'),
+ ('FE-004829', 'Paula Bran', '34.640.993', '#RS-20808', '$ 11.200.000', '2026-12-16', 'info', 'Enviada'),
+ ('FE-004830', 'Nicolás Gil', '78.750.275', '#RS-20801', '$ 13.200.000', '2026-05-18', 'ok', 'Aceptada'),
+ ('FE-004831', 'Santiago Gómez', '32.328.242', '#RS-20826', '$ 5.600.000', '2026-02-15', 'ok', 'Aceptada'),
+ ('FE-004832', 'Nicolás Gil', '78.750.275', '#RS-20809', '$ 10.200.000', '2026-09-23', 'warn', 'Por validar'),
+ ('FE-004833', 'Paula Bran', '34.640.993', '#RS-20826', '$ 1.250.000', '2026-04-15', 'warn', 'Por validar'),
+ ('FE-004834', 'Tomás Gil', '28.680.997', '#RS-20824', '$ 6.300.000', '2026-12-05', 'ok', 'Aceptada'),
+ ('FE-004835', 'Antonia Serna', '6.847.570', '#RS-20817', '$ 6.100.000', '2026-09-09', 'warn', 'Por validar'),
+ ('FE-004836', 'Santiago Gómez', '32.328.242', '#RS-20818', '$ 12.900.000', '2026-03-15', 'info', 'Enviada'),
+ ('FE-004837', 'Renata Jaramillo', '27.803.749', '#RS-20830', '$ 6.100.000', '2026-09-25', 'info', 'Enviada'),
+ ('FE-004838', 'Renata Jaramillo', '27.803.749', '#RS-20824', '$ 1.750.000', '2026-04-23', 'warn', 'Por validar'),
+ ('FE-004839', 'Emmanuel Arango', '77.431.600', '#RS-20824', '$ 5.400.000', '2026-01-11', 'ok', 'Aceptada'),
+ ('FE-004840', 'Manuela Mejía', '51.234.787', '#RS-20824', '$ 12.600.000', '2026-08-02', 'warn', 'Por validar'),
+ ('FE-004841', 'Samuel Bran', '88.432.963', '#RS-20832', '$ 5.200.000', '2026-08-04', 'info', 'Enviada'),
+ ('FE-004842', 'Miguel Montoya', '18.370.218', '#RS-20829', '$ 12.600.000', '2026-07-28', 'ok', 'Aceptada'),
+ ('FE-004843', 'Tomás Gil', '28.680.997', '#RS-20804', '$ 7.100.000', '2026-06-20', 'warn', 'Por validar'),
+ ('FE-004844', 'Tomás Vélez', '49.102.499', '#RS-20805', '$ 4.300.000', '2026-07-11', 'info', 'Enviada'),
+ ('FE-004845', 'María Londoño', '10.650.318', '#RS-20834', '$ 5.900.000', '2026-04-21', 'ok', 'Aceptada'),
+ ('FE-004846', 'David Marín', '57.629.562', '#RS-20814', '$ 9.600.000', '2026-02-25', 'ok', 'Aceptada'),
+ ('FE-004847', 'Juan Betancur', '49.384.564', '#RS-20828', '$ 16.400.000', '2026-01-02', 'ok', 'Aceptada'),
+ ('FE-004848', 'Felipe Álvarez', '36.785.597', '#RS-20803', '$ 9.400.000', '2026-06-14', 'info', 'Enviada'),
+ ('FE-004849', 'Tomás Gil', '28.680.997', '#RS-20815', '$ 6.800.000', '2026-03-06', 'warn', 'Por validar'),
+ ('FE-004850', 'Sara Pérez', '74.296.821', '#RS-20824', '$ 12.900.000', '2026-10-05', 'ok', 'Aceptada'),
+ ('FE-004851', 'Mateo Naranjo', '81.405.961', '#RS-20829', '$ 24.500.000', '2026-05-22', 'info', 'Enviada'),
+ ('FE-004852', 'Santiago Gómez', '32.328.242', '#RS-20829', '$ 4.300.000', '2026-03-03', 'info', 'Enviada'),
+ ('FE-004853', 'Sofía Serna', '87.982.340', '#RS-20822', '$ 9.600.000', '2026-12-09', 'info', 'Enviada'),
+ ('FE-004854', 'Renata Muñoz', '54.773.697', '#RS-20819', '$ 13.800.000', '2026-08-04', 'ok', 'Aceptada');
 
 insert into proveedores (nombre, tipo, contacto, convenio, tono, estado) values
- ('Avianca','Aerolínea','ventas@avianca.com','Comisión 8%','ok','Activo'),
- ('Decameron','Hotelería','corporativo@decameron.com','Tarifa neta','ok','Activo'),
- ('LATAM Airlines','Aerolínea','b2b@latam.com','Comisión 6%','ok','Activo'),
- ('Meliá Hotels','Hotelería','reservas@melia.com','Cupo garantizado','warn','En revisión'),
- ('ExpediTours','Operador terrestre','ops@expeditours.com','Por servicio','info','Nuevo');
+ ('Avianca', 'Aerolínea', 'contacto@avianca.com', 'Tarifa neta', 'ok', 'Activo'),
+ ('Decameron', 'Hotelería', 'contacto@decameron.com', 'Cupo garantizado', 'warn', 'En revisión'),
+ ('LATAM Airlines', 'Aerolínea', 'contacto@latam.com', 'Por servicio', 'warn', 'En revisión'),
+ ('Meliá Hotels', 'Hotelería', 'contacto@meliá.com', 'Comisión 6%', 'warn', 'En revisión'),
+ ('ExpediTours', 'Operador terrestre', 'contacto@expeditours.com', 'Comisión 10%', 'info', 'Nuevo'),
+ ('Wingo', 'Aerolínea', 'contacto@wingo.com', 'Cupo garantizado', 'ok', 'Activo'),
+ ('Copa Airlines', 'Aerolínea', 'contacto@copa.com', 'Cupo garantizado', 'ok', 'Activo'),
+ ('Hilton', 'Hotelería', 'contacto@hilton.com', 'Comisión 10%', 'info', 'Nuevo'),
+ ('Marriott', 'Hotelería', 'contacto@marriott.com', 'Cupo garantizado', 'ok', 'Activo'),
+ ('Iberia', 'Aerolínea', 'contacto@iberia.com', 'Comisión 8%', 'warn', 'En revisión'),
+ ('Air France', 'Aerolínea', 'contacto@air.com', 'Cupo garantizado', 'ok', 'Activo'),
+ ('Sheraton', 'Hotelería', 'contacto@sheraton.com', 'Por servicio', 'warn', 'En revisión'),
+ ('GHL Hoteles', 'Hotelería', 'contacto@ghl.com', 'Por servicio', 'ok', 'Activo'),
+ ('Estelar Hoteles', 'Hotelería', 'contacto@estelar.com', 'Por servicio', 'ok', 'Activo'),
+ ('Viva Air', 'Aerolínea', 'contacto@viva.com', 'Comisión 10%', 'ok', 'Activo'),
+ ('JetSMART', 'Aerolínea', 'contacto@jetsmart.com', 'Comisión 6%', 'info', 'Nuevo'),
+ ('Emirates', 'Aerolínea', 'contacto@emirates.com', 'Por servicio', 'warn', 'En revisión'),
+ ('Delta', 'Aerolínea', 'contacto@delta.com', 'Comisión 6%', 'ok', 'Activo'),
+ ('American Airlines', 'Aerolínea', 'contacto@american.com', 'Comisión 10%', 'warn', 'En revisión'),
+ ('NH Hotels', 'Hotelería', 'contacto@nh.com', 'Comisión 8%', 'info', 'Nuevo'),
+ ('Radisson', 'Hotelería', 'contacto@radisson.com', 'Comisión 8%', 'ok', 'Activo'),
+ ('Movich Hoteles', 'Hotelería', 'contacto@movich.com', 'Cupo garantizado', 'warn', 'En revisión'),
+ ('Dann Hoteles', 'Hotelería', 'contacto@dann.com', 'Comisión 8%', 'warn', 'En revisión'),
+ ('Sirenis', 'Hotelería', 'contacto@sirenis.com', 'Tarifa neta', 'warn', 'En revisión'),
+ ('Barceló', 'Hotelería', 'contacto@barceló.com', 'Por servicio', 'warn', 'En revisión'),
+ ('RIU Hotels', 'Hotelería', 'contacto@riu.com', 'Comisión 6%', 'warn', 'En revisión'),
+ ('Palladium', 'Hotelería', 'contacto@palladium.com', 'Comisión 6%', 'info', 'Nuevo'),
+ ('Aviatur Ops', 'Operador terrestre', 'contacto@aviatur.com', 'Comisión 8%', 'ok', 'Activo'),
+ ('Colombian Tours', 'Operador terrestre', 'contacto@colombian.com', 'Cupo garantizado', 'info', 'Nuevo'),
+ ('Andes Travel', 'Operador terrestre', 'contacto@andes.com', 'Comisión 6%', 'warn', 'En revisión'),
+ ('Caribe DMC', 'Operador terrestre', 'contacto@caribe.com', 'Comisión 6%', 'info', 'Nuevo'),
+ ('Europa Tours', 'Operador terrestre', 'contacto@europa.com', 'Cupo garantizado', 'warn', 'En revisión'),
+ ('Panorama', 'Operador terrestre', 'contacto@panorama.com', 'Tarifa neta', 'ok', 'Activo'),
+ ('GlobalBus', 'Operador terrestre', 'contacto@globalbus.com', 'Por servicio', 'warn', 'En revisión'),
+ ('MarSol Cruceros', 'Naviera', 'contacto@marsol.com', 'Cupo garantizado', 'warn', 'En revisión');
 
--- ------------------------- Seguridad (RLS) -------------------------
--- Demo académica: se permite lectura/escritura con la clave anón pública.
--- (En producción se restringiría por usuario autenticado.)
 do $$
 declare t text;
 begin

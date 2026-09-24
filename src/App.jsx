@@ -764,10 +764,19 @@ function PeopleView({ title, action, rows, leadCols, actIdx, obsIdx, desIdx, has
                 <TableRow key={r[0]} className={`border-border hover:bg-sky-50 ${activo ? "" : "opacity-55"}`}>
                   {leadCols.map((c, i) => <TableCell key={i} className={i === 0 ? "font-medium text-foreground" : ""}>{r[c.idx]}</TableCell>)}
                   <TableCell><Pill tone={activo ? "ok" : "bad"}>{activo ? t("st.active") : t("st.inactive")}</Pill></TableCell>
-                  <TableCell className="max-w-[240px]">
-                    {r[obsIdx]
-                      ? <span className="text-xs text-muted-foreground">{r[obsIdx]}{(r[desIdx] || r[hasIdx]) ? <span className="ml-1 whitespace-nowrap text-blue-600">({r[desIdx] || "—"} → {r[hasIdx] || "—"})</span> : null}</span>
-                      : <span className="text-xs text-slate-400">{t("empty")}</span>}
+                  <TableCell className="max-w-[280px] align-top">
+                    {r[obsIdx] ? (
+                      <div className="flex flex-col items-start gap-1 py-0.5">
+                        <span className="text-xs leading-snug text-muted-foreground">{r[obsIdx]}</span>
+                        {(r[desIdx] || r[hasIdx]) && (
+                          <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
+                            <CalendarDays className="h-3 w-3" />{r[desIdx] || "—"} → {r[hasIdx] || "—"}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400">{t("empty")}</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">

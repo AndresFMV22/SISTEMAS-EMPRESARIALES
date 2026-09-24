@@ -42,6 +42,10 @@ const DICT = {
     "cookie.accept": "Aceptar", "cookie.reject": "Rechazar",
     "obs.title": "Observaciones del registro", "obs.text": "Observación", "obs.from": "Desde", "obs.to": "Hasta",
     "empty": "Sin observaciones",
+    "pay.title": "Registrar pago", "pay.total": "Total del viaje", "pay.paid": "Abonado",
+    "pay.saldo": "Saldo pendiente", "pay.amount": "Monto a pagar", "pay.maxHint": "Máximo:",
+    "pay.min": "El monto debe ser mayor a 0.", "pay.over": "No puedes pagar más que el saldo pendiente.",
+    "pay.done": "Reserva pagada por completo.",
   },
   en: {
     "app.tagline": "Enterprise System · Travel Agency Management",
@@ -75,6 +79,10 @@ const DICT = {
     "cookie.accept": "Accept", "cookie.reject": "Reject",
     "obs.title": "Record notes", "obs.text": "Note", "obs.from": "From", "obs.to": "To",
     "empty": "No notes",
+    "pay.title": "Register payment", "pay.total": "Trip total", "pay.paid": "Paid",
+    "pay.saldo": "Outstanding balance", "pay.amount": "Amount to pay", "pay.maxHint": "Maximum:",
+    "pay.min": "Amount must be greater than 0.", "pay.over": "You cannot pay more than the outstanding balance.",
+    "pay.done": "Booking fully paid.",
   },
   fr: {
     "app.tagline": "Système d'entreprise · Gestion d'agence de voyages",
@@ -108,6 +116,10 @@ const DICT = {
     "cookie.accept": "Accepter", "cookie.reject": "Refuser",
     "obs.title": "Notes de l'enregistrement", "obs.text": "Note", "obs.from": "Du", "obs.to": "Au",
     "empty": "Aucune note",
+    "pay.title": "Enregistrer un paiement", "pay.total": "Total du voyage", "pay.paid": "Payé",
+    "pay.saldo": "Solde restant", "pay.amount": "Montant à payer", "pay.maxHint": "Maximum :",
+    "pay.min": "Le montant doit être supérieur à 0.", "pay.over": "Vous ne pouvez pas payer plus que le solde restant.",
+    "pay.done": "Réservation entièrement payée.",
   },
   ru: {
     "app.tagline": "Корпоративная система · Управление турагентством",
@@ -141,6 +153,10 @@ const DICT = {
     "cookie.accept": "Принять", "cookie.reject": "Отклонить",
     "obs.title": "Заметки записи", "obs.text": "Заметка", "obs.from": "С", "obs.to": "По",
     "empty": "Нет заметок",
+    "pay.title": "Регистрация платежа", "pay.total": "Итого за поездку", "pay.paid": "Оплачено",
+    "pay.saldo": "Остаток", "pay.amount": "Сумма к оплате", "pay.maxHint": "Максимум:",
+    "pay.min": "Сумма должна быть больше 0.", "pay.over": "Нельзя оплатить больше остатка.",
+    "pay.done": "Бронь полностью оплачена.",
   },
   pt: {
     "app.tagline": "Sistema Empresarial · Gestão de Agência de Viagens",
@@ -174,6 +190,10 @@ const DICT = {
     "cookie.accept": "Aceitar", "cookie.reject": "Recusar",
     "obs.title": "Observações do registro", "obs.text": "Observação", "obs.from": "De", "obs.to": "Até",
     "empty": "Sem observações",
+    "pay.title": "Registrar pagamento", "pay.total": "Total da viagem", "pay.paid": "Pago",
+    "pay.saldo": "Saldo pendente", "pay.amount": "Valor a pagar", "pay.maxHint": "Máximo:",
+    "pay.min": "O valor deve ser maior que 0.", "pay.over": "Você não pode pagar mais que o saldo pendente.",
+    "pay.done": "Reserva paga integralmente.",
   },
 };
 

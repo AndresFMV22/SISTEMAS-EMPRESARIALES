@@ -339,7 +339,58 @@ function DataView({ title, cols, rows, cta, action }) {
   );
 }
 
-function ReservasView({ reservas, onPay, action }) {
+function PaymentDialog({ code, info, onPay }) {
+  const { t } = useLang();
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState("");
+  useEffect(() => { if (open) { setAmount(String(info.saldo)); setError(""); } }, [open, info.saldo]);
+
+  const submit = (e) => {
+    e.preventDefault();
+    const num = parseMoney(amount);
+    if (num <= 0) { setError(t("pay.min")); return; }
+    if (num > info.saldo) { setError(t("pay.over")); return; }
+    onPay(code, num);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50">
+          <CreditCard className="h-3.5 w-3.5" />{t("btn.pay")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader><DialogTitle>{t("pay.title")} · {code}</DialogTitle></DialogHeader>
+        <div className="space-y-1.5 rounded-xl border border-border bg-muted/40 p-3 text-sm">
+          <div className="flex justify-between"><span className="text-muted-foreground">{t("pay.total")}</span><b className="text-foreground">{fmtMoney(info.total)}</b></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">{t("pay.paid")}</span><b className="text-emerald-600">{fmtMoney(info.pagado)}</b></div>
+          <div className="flex justify-between border-t border-border pt-1.5"><span className="font-medium text-foreground">{t("pay.saldo")}</span><b className="text-blue-600">{fmtMoney(info.saldo)}</b></div>
+        </div>
+        {info.saldo <= 0 ? (
+          <p className="flex items-center justify-center gap-1 py-3 text-sm font-medium text-emerald-600"><Check className="h-4 w-4" />{t("pay.done")}</p>
+        ) : (
+          <form onSubmit={submit} className="mt-3 space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="amount">{t("pay.amount")}</Label>
+              <Input id="amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
+              <p className="text-[11px] text-muted-foreground">{t("pay.maxHint")} {fmtMoney(info.saldo)}</p>
+            </div>
+            {error && <p className="text-sm text-rose-500">{error}</p>}
+            <DialogFooter className="gap-2 sm:gap-2">
+              <DialogClose asChild><Button type="button" variant="outline">{t("btn.cancel")}</Button></DialogClose>
+              <Button type="submit" className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">{t("btn.pay")}</Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReservasView({ reservas, onPay, getInfo, action }) {
   const { t } = useLang();
   return (
     <Panel title={t("nav.reservas")} tag={action}>
@@ -364,10 +415,7 @@ function ReservasView({ reservas, onPay, action }) {
                 {r[7] === "Pagada" ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-emerald-600"><Check className="h-4 w-4" />{t("st.paid")}</span>
                 ) : (
-                  <Button size="sm" variant="outline" onClick={() => onPay(r[0])}
-                    className="h-7 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50">
-                    <CreditCard className="h-3.5 w-3.5" />{t("btn.pay")}
-                  </Button>
+                  <PaymentDialog code={r[0]} info={getInfo(r[0])} onPay={onPay} />
                 )}
               </TableCell>
             </TableRow>
@@ -474,6 +522,8 @@ function Reportes() {
 const hoy = () => new Date().toISOString().slice(0, 10);
 const n4 = () => Math.floor(1000 + Math.random() * 9000);
 const n6 = () => Math.floor(100000 + Math.random() * 900000);
+const parseMoney = (s) => Number(String(s ?? "").replace(/[^\d]/g, "")) || 0;
+const fmtMoney = (n) => "$ " + Math.round(n).toLocaleString("es-CO");
 
 // Cada config: qué tabla, qué campos, y cómo construir el registro para BD y para la tabla.
 const FORMS = {
@@ -920,24 +970,41 @@ function Shell({ onLogout, dark, setDark }) {
     }
   };
 
-  // Pagar -> registra el pago, marca la reserva "Pagada" y su factura "Aceptada"
-  const payReserva = async (code) => {
+  // Total del viaje, abonado y saldo pendiente de una reserva
+  const payInfo = (code) => {
+    const r = data.reservas.find((x) => x[0] === code);
+    const totalStr = data.facturas.find((f) => f[3] === code)?.[4]
+      || data.paquetes.find((p) => p.n === (r ? r[2] : null))?.precio || "0";
+    const total = parseMoney(totalStr);
+    const pagado = data.pagos.filter((pg) => pg[1] === code).reduce((s, pg) => s + parseMoney(pg[4]), 0);
+    return { total, pagado, saldo: Math.max(total - pagado, 0) };
+  };
+
+  // Pagar (abono o pago total). No permite pagar más que el saldo.
+  const payReserva = async (code, amount) => {
     const r = data.reservas.find((x) => x[0] === code);
     if (!r) return;
-    const valor = data.facturas.find((x) => x[3] === code)?.[4] || "$ 0";
+    const { saldo } = payInfo(code);
+    const monto = Math.min(amount, saldo);
+    if (monto <= 0) return;
+    const completa = monto >= saldo;
     const recibo = "#PG-" + n4();
-    const pgrow = [recibo, code, r[1], "Tarjeta crédito", valor, hoy(), "ok", "Pagado"];
+    const valorStr = fmtMoney(monto);
+    const pgTono = completa ? "ok" : "warn";
+    const pgEstado = completa ? "Pagado" : "Abono";
+    const resTono = completa ? "ok" : "warn";
+    const resEstado = completa ? "Pagada" : "Pago parcial";
     setData((d) => ({
       ...d,
-      pagos: [pgrow, ...d.pagos],
-      reservas: d.reservas.map((x) => (x[0] === code ? [...x.slice(0, 6), "ok", "Pagada"] : x)),
-      facturas: d.facturas.map((x) => (x[3] === code ? [...x.slice(0, 6), "ok", "Aceptada"] : x)),
+      pagos: [[recibo, code, r[1], "Tarjeta crédito", valorStr, hoy(), pgTono, pgEstado], ...d.pagos],
+      reservas: d.reservas.map((x) => (x[0] === code ? [...x.slice(0, 6), resTono, resEstado] : x)),
+      facturas: completa ? d.facturas.map((x) => (x[3] === code ? [...x.slice(0, 6), "ok", "Aceptada"] : x)) : d.facturas,
     }));
     if (isSupabaseReady) {
       try {
-        await insertRow("pagos", { recibo, reserva: code, cliente: r[1], metodo: "Tarjeta crédito", valor, fecha: hoy(), tono: "ok", estado: "Pagado" });
-        await updateRows("reservas", "codigo", code, { tono: "ok", estado: "Pagada" });
-        await updateRows("facturas", "reserva", code, { tono: "ok", estado: "Aceptada" });
+        await insertRow("pagos", { recibo, reserva: code, cliente: r[1], metodo: "Tarjeta crédito", valor: valorStr, fecha: hoy(), tono: pgTono, estado: pgEstado });
+        await updateRows("reservas", "codigo", code, { tono: resTono, estado: resEstado });
+        if (completa) await updateRows("facturas", "reserva", code, { tono: "ok", estado: "Aceptada" });
       } catch (err) { console.warn("No se persistió en Supabase:", err.message); }
     }
   };
@@ -983,7 +1050,7 @@ function Shell({ onLogout, dark, setDark }) {
           </div>
         );
       case "reservas":
-        return <ReservasView reservas={data.reservas} onPay={payReserva} action={addAction("reservas")} />;
+        return <ReservasView reservas={data.reservas} onPay={payReserva} getInfo={payInfo} action={addAction("reservas")} />;
       case "pagos":
         return <DataView title={t("nav.pagos")} action={addAction("pagos")}
           cols={["Recibo", "Reserva", "Cliente", "Método", "Valor", "Fecha", "Estado"]}

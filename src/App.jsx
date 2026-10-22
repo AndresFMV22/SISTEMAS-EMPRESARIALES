@@ -5,7 +5,7 @@ import {
   ReceiptText, Building2, BarChart3, Search, LogOut, Menu, TrendingUp,
   TrendingDown, Plus, Umbrella, Landmark, Waves, FerrisWheel, Mountain,
   Building, Bus, Ship, Plane, Database, CircleAlert, Check,
-  Moon, Sun, Languages, Shield, Cookie, MessageSquarePlus, Power, X,
+  Moon, Sun, Languages, Shield, Cookie, MessageSquarePlus, Power, X, Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -276,20 +276,28 @@ function Dashboard({ reservas }) {
         </Panel>
       </div>
 
-      <Panel title={t("dash.recientes")} tag={
+      {/* Filtro de fechas explícito */}
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl px-4 py-3 ${glass}`}>
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Filter className="h-4 w-4 text-blue-600" />{t("dash.filter")}
+        </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="hidden sm:inline">{t("dash.filter")}:</span>
-          <span>{t("dash.from")}</span>
-          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="h-8 w-[150px]" />
-          <span>{t("dash.to")}</span>
-          <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="h-8 w-[150px]" />
+          <label className="font-medium">{t("dash.from")}</label>
+          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="h-9 w-[160px]" />
+          <label className="font-medium">{t("dash.to")}</label>
+          <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="h-9 w-[160px]" />
           {(desde || hasta) && (
-            <Button size="sm" variant="ghost" className="h-8 px-2 text-blue-600" onClick={() => { setDesde(""); setHasta(""); }}>
+            <Button size="sm" variant="ghost" className="h-8 px-2 text-blue-600 dark:text-sky-300" onClick={() => { setDesde(""); setHasta(""); }}>
               {t("dash.clear")}
             </Button>
           )}
         </div>
-      }>
+        <span className="ml-auto rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-600 dark:text-sky-300">
+          {filtradas.length} · {t("nav.reservas")}
+        </span>
+      </div>
+
+      <Panel title={t("dash.recientes")} tag={<span className="text-[11px] font-medium text-blue-600 dark:text-sky-300">{t("col.fecha")}</span>}>
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">

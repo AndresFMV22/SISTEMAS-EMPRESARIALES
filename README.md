@@ -63,7 +63,7 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
 | **Resumen** | Indicadores de registros actuales, gráfico de pagos por mes, paquetes más reservados y **filtro de reservas por rango de fechas**. |
 | **Clientes** | Alta de clientes y, en lugar de borrar, **activar/desactivar** con **observaciones y vigencia (rango de fechas)** para no perder información valiosa. |
 | **Empleados** | Gestión del personal con la misma lógica de **activo/inactivo + observaciones** (útil ante retiros o despidos sin perder el histórico). |
-| **Paquetes turísticos** | Catálogo con precio, cupos, **fechas de salida y regreso** y **filtro por fecha de salida**. |
+| **Paquetes turísticos** | Catálogo con precio, cupos y fechas. Tarjetas con estados **Disponible / Cupo completo / En viaje**, filtros por fecha y estado, y viajes finalizados ocultos conservando el historial. |
 | **Reservas** | Al crear una reserva se **genera su factura automáticamente**; maneja estados **Pendiente → En proceso → Pagada**. |
 | **Pagos** | Flujo de pago con **total, abonado y saldo**; permite **abonos parciales** y **valida que no se pague más que el saldo pendiente**. |
 | **Facturación** | Facturación electrónica ligada a cada reserva, con estados (*Por validar, Enviada, Aceptada*). |

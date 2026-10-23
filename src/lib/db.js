@@ -1,4 +1,5 @@
 import { supabase, supabaseConfigurado } from "./supabase";
+import { mostrarDinero } from "./dinero";
 
 // Trae todas las entidades desde Supabase y las mapea al formato que usa la UI.
 // Devuelve null si no hay credenciales (la app usa los datos demo).
@@ -14,10 +15,10 @@ export async function obtenerEntidades() {
 
   return {
     clientes: clientes.map((cliente) => [cliente.codigo, cliente.nombre, cliente.documento, cliente.correo, cliente.telefono, cliente.reservas, cliente.activo ?? cliente.estado !== "Inactivo", cliente.observaciones || "", cliente.obs_desde || "", cliente.obs_hasta || ""]),
-    paquetes: paquetes.map((paquete) => ({ icono: paquete.icono, nombre: paquete.nombre, ubicacion: paquete.loc, precio: paquete.precio, cupo: paquete.cupo, salida: paquete.salida || "", regreso: paquete.regreso || "" })),
+    paquetes: paquetes.map((paquete) => ({ icono: paquete.icono, nombre: paquete.nombre, ubicacion: paquete.loc, precio: mostrarDinero(paquete.precio), cupo: paquete.cupo, salida: paquete.salida || "", regreso: paquete.regreso || "" })),
     reservas: reservas.map((reserva) => [reserva.codigo, reserva.cliente, reserva.paquete, reserva.pax, reserva.fecha_viaje, reserva.asesor, reserva.tono, reserva.estado]),
-    pagos: pagos.map((pago) => [pago.recibo, pago.reserva, pago.cliente, pago.metodo, pago.valor, pago.fecha, pago.tono, pago.estado]),
-    facturas: facturas.map((factura) => [factura.factura, factura.cliente, factura.nit, factura.reserva, factura.valor, factura.fecha, factura.tono, factura.estado]),
+    pagos: pagos.map((pago) => [pago.recibo, pago.reserva, pago.cliente, pago.metodo, mostrarDinero(pago.valor), pago.fecha, pago.tono, pago.estado]),
+    facturas: facturas.map((factura) => [factura.factura, factura.cliente, factura.nit, factura.reserva, mostrarDinero(factura.valor), factura.fecha, factura.tono, factura.estado]),
     proveedores: proveedores.map((proveedor) => [proveedor.nombre, proveedor.tipo, proveedor.contacto, proveedor.convenio, proveedor.tono, proveedor.estado]),
     empleados: empleados.map((empleado) => [empleado.codigo, empleado.nombre, empleado.cargo, empleado.correo, empleado.telefono, !!empleado.activo, empleado.observaciones || "", empleado.obs_desde || "", empleado.obs_hasta || ""]),
   };

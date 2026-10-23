@@ -258,6 +258,34 @@ for (const [clave, traducciones] of Object.entries(TEXTOS_ACCESO)) {
   IDIOMAS.forEach((opcion, indice) => { DICCIONARIO[opcion.code][`acceso.${clave}`] = traducciones[indice]; });
 }
 
+const textosPaquetes = {
+  cerrarSesion: ["Cerrar sesión", "Sign out", "Se déconnecter", "Выйти", "Encerrar sessão"],
+  filtroEstado: ["Filtrar paquetes por estado", "Filter packages by status", "Filtrer les forfaits par état", "Фильтр пакетов по статусу", "Filtrar pacotes por estado"],
+  "filtro.todos": ["Todos", "All", "Tous", "Все", "Todos"],
+  "filtro.disponible": ["Disponibles", "Available", "Disponibles", "Доступные", "Disponíveis"],
+  "filtro.lleno": ["Llenos", "Full", "Complets", "Мест нет", "Lotados"],
+  "filtro.en_viaje": ["En viaje", "In progress", "En voyage", "В поездке", "Em viagem"],
+  "filtro.incompleto": ["Por completar", "Incomplete", "À compléter", "Неполные", "A completar"],
+  "estado.disponible": ["DISPONIBLE", "AVAILABLE", "DISPONIBLE", "ДОСТУПЕН", "DISPONÍVEL"],
+  "estado.lleno": ["CUPO COMPLETO", "FULLY BOOKED", "COMPLET", "МЕСТ НЕТ", "ESGOTADO"],
+  "estado.en_viaje": ["EN VIAJE", "TRIP IN PROGRESS", "EN VOYAGE", "В ПОЕЗДКЕ", "EM VIAGEM"],
+  "estado.incompleto": ["DATOS POR COMPLETAR", "INCOMPLETE DETAILS", "INFORMATIONS À COMPLÉTER", "НЕПОЛНЫЕ ДАННЫЕ", "DADOS A COMPLETAR"],
+  "detalle.disponible": ["Disponible para nuevas reservas.", "Open for new bookings.", "Ouvert aux nouvelles réservations.", "Доступен для бронирования.", "Disponível para novas reservas."],
+  "detalle.lleno": ["No quedan cupos para nuevas reservas.", "No places left for new bookings.", "Aucune place pour de nouvelles réservations.", "Нет мест для бронирования.", "Não há vagas para novas reservas."],
+  "detalle.en_viaje": ["La salida ya comenzó. No admite nuevas reservas.", "Departure has started. Closed to new bookings.", "Le départ a eu lieu. Réservations fermées.", "Поездка началась. Бронирование закрыто.", "A viagem começou. Novas reservas encerradas."],
+  "detalle.incompleto": ["Revisa fechas y cupos antes de ofrecer este paquete.", "Check dates and capacity before offering this package.", "Vérifiez les dates et les places avant de proposer ce forfait.", "Проверьте даты и места перед продажей.", "Verifique datas e vagas antes de oferecer este pacote."],
+  cuposDisponibles: ["cupos disponibles", "places available", "places disponibles", "свободных мест", "vagas disponíveis"],
+  cuposSinDefinir: ["Cupos sin definir", "Capacity not defined", "Places non définies", "Места не указаны", "Vagas não definidas"],
+  catalogoVacio: ["No hay paquetes vigentes. Los viajes finalizados se conservan en el historial.", "No current packages. Completed trips remain in the history.", "Aucun forfait en cours. Les voyages terminés restent dans l’historique.", "Нет текущих пакетов. Завершённые поездки сохранены в истории.", "Não há pacotes vigentes. Viagens encerradas permanecem no histórico."],
+  sinResultados: ["No hay paquetes que coincidan con estos filtros.", "No packages match these filters.", "Aucun forfait ne correspond aux filtres.", "Нет пакетов по этим фильтрам.", "Nenhum pacote corresponde aos filtros."],
+  noReservable: ["El paquete ya no está disponible para nuevas reservas.", "The package is no longer available for new bookings.", "Ce forfait n’est plus disponible à la réservation.", "Пакет больше недоступен для бронирования.", "O pacote não está mais disponível para novas reservas."],
+  viajerosInvalidos: ["Indica un número entero de viajeros mayor que cero y que no supere los cupos disponibles.", "Enter a positive whole number of travelers within available capacity.", "Indiquez un nombre entier positif de voyageurs dans la limite des places.", "Укажите положительное целое число путешественников в пределах свободных мест.", "Informe um número inteiro positivo de viajantes dentro das vagas disponíveis."],
+  navegacion: ["Navegación principal", "Main navigation", "Navigation principale", "Основная навигация", "Navegação principal"],
+};
+Object.entries(textosPaquetes).forEach(([clave, traducciones]) => {
+  IDIOMAS.forEach((opcion, indice) => { DICCIONARIO[opcion.code][`paquetes.${clave}`] = traducciones[indice]; });
+});
+
 const ContextoIdioma = createContext({ lang: "es", setLang: () => {}, t: (clave) => clave });
 
 export function ProveedorIdioma({ children }) {

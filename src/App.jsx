@@ -33,6 +33,11 @@ import { DATOS_DEMO } from "@/lib/demoData";
 import { useIdioma, IDIOMAS } from "@/lib/i18n.jsx";
 import PuertaAcceso from "@/components/PuertaAcceso";
 import GestionAccesosEmpleados from "@/components/GestionAccesosEmpleados";
+import { estadoPaquete, fechaColombia, obtenerCupos } from "@/lib/paquetes";
+import { useFechaColombia } from "@/lib/useFechaColombia";
+import { BarraLateral, CabeceraBarraLateral, ContenidoBarraLateral, PieBarraLateral } from "@/components/BarraLateral";
+import CampoDinero from "@/components/CampoDinero";
+import { leerDinero, mostrarDinero } from "@/lib/dinero";
 
 const LOGO = "/logo-mark.png";
 
@@ -42,7 +47,7 @@ function crearIndicadores({ clientes, paquetes, reservas, pagos }) {
   const cupos = paquetes.reduce((total, paquete) => total + (Number(paquete.cupo?.match(/Cupos:\s*(\d+)/i)?.[1]) || 0), 0);
   return [
     { lbl: "Reservas activas", to: reservas.filter((reserva) => !["Cancelada", "Finalizada"].includes(reserva[7])).length },
-    { lbl: "Pagos registrados", to: ingresos / 1000000, prefix: "$ ", suffix: " M", decimals: 1 },
+    { lbl: "Pagos registrados", to: ingresos, prefix: "$ " },
     { lbl: "Clientes registrados", to: clientes.length },
     { lbl: "Cupos mostrados", to: cupos },
   ];
@@ -50,7 +55,7 @@ function crearIndicadores({ clientes, paquetes, reservas, pagos }) {
 
 function ventasPorMes(pagos) {
   const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  return meses.map((mes, indice) => [mes, pagos.filter((pago) => Number(pago[5]?.slice(5, 7)) === indice + 1).reduce((suma, pago) => suma + leerDinero(pago[4]), 0) / 1000000]);
+  return meses.map((mes, indice) => [mes, pagos.filter((pago) => Number(pago[5]?.slice(5, 7)) === indice + 1).reduce((suma, pago) => suma + leerDinero(pago[4]), 0)]);
 }
 
 function paquetesMasReservados(reservas) {
@@ -124,7 +129,7 @@ function TarjetaIndicador({ indicador, indice }) {
         <TarjetaIluminada className={`rounded-2xl p-5 ${cristal}`} spotlightColor="rgba(37,99,235,0.12)">
           <div className="relative z-[2]">
             <p className="mb-2 text-[13px] text-muted-foreground">{indicador.lbl}</p>
-            <p className="text-[27px] font-bold text-foreground">
+            <p className="break-words text-[clamp(1.05rem,2vw,1.6875rem)] font-bold text-foreground">
               <ContadorAnimado to={indicador.to} prefix={indicador.prefix || ""} suffix={indicador.suffix || ""} decimals={indicador.decimals || 0} duration={1.6} />
             </p>
           </div>
@@ -155,7 +160,7 @@ function GraficoBarras({ pagos }) {
         <div key={mes} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
           <motion.div
             className="w-3/5 rounded-t-lg bg-gradient-to-b from-sky-400 to-blue-600 shadow-[0_4px_14px_rgba(37,99,235,0.25)] hover:brightness-110"
-            title={`$ ${valor.toFixed(1)} M`}
+            title={mostrarDinero(valor)}
             initial={{ height: 0 }}
             animate={{ height: `${(valor / maximo) * 100}%` }}
             transition={{ delay: indice * 0.06, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
@@ -191,7 +196,7 @@ function Resumen({ datos }) {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-        <Panel titulo={t("dash.ventas")} etiqueta="COP (M)"><GraficoBarras pagos={pagos} /></Panel>
+        <Panel titulo={t("dash.ventas")} etiqueta="COP"><GraficoBarras pagos={pagos} /></Panel>
         <Panel titulo={t("dash.destinos")} etiqueta="Top 5">
           <div className="divide-y divide-border">
             {paquetesMasReservados(reservas).map(([nombre, cantidad]) => (
@@ -317,7 +322,7 @@ function DialogoPago({ codigo, informacion, alPagar }) {
           <form onSubmit={enviar} className="mt-3 space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="amount">{t("pay.amount")}</Label>
-              <Input id="amount" inputMode="numeric" value={monto} onChange={(evento) => setMonto(evento.target.value)} placeholder="0" />
+              <CampoDinero id="amount" valor={monto} alCambiar={setMonto} placeholder="$ 0" />
               <p className="text-[11px] text-muted-foreground">{t("pay.maxHint")} {mostrarDinero(informacion.saldo)}</p>
             </div>
             {error && <p role="alert" className="text-sm text-rose-500">{error}</p>}
@@ -369,9 +374,14 @@ function VistaReservas({ reservas, alPagar, obtenerSaldo, accion }) {
 
 function VistaPaquetes({ paquetes, accion }) {
   const { t } = useIdioma();
+  const fecha = useFechaColombia();
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
-  const lista = paquetes.filter((paquete) => {
+  const [filtroEstado, cambiarFiltroEstado] = useState("todos");
+  const catalogo = paquetes.map((paquete) => ({ paquete, estado: estadoPaquete(paquete, fecha) }))
+    .filter(({ estado }) => estado !== "finalizado");
+  const lista = catalogo.filter(({ paquete, estado }) => {
+    if (filtroEstado !== "todos" && estado !== filtroEstado) return false;
     if (desde && (!paquete.salida || paquete.salida < desde)) return false;
     if (hasta && (!paquete.salida || paquete.salida > hasta)) return false;
     return true;
@@ -395,32 +405,66 @@ function VistaPaquetes({ paquetes, accion }) {
         {accion}
       </div>
 
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t("paquetes.filtroEstado")}>
+        {["todos", "disponible", "lleno", "en_viaje", "incompleto"].map((estado) => {
+          const cantidad = estado === "todos" ? catalogo.length : catalogo.filter((elemento) => elemento.estado === estado).length;
+          if (estado === "incompleto" && cantidad === 0) return null;
+          return <Button key={estado} variant={filtroEstado === estado ? "default" : "outline"}
+            aria-pressed={filtroEstado === estado} onClick={() => cambiarFiltroEstado(estado)}>
+            {t(`paquetes.filtro.${estado}`)} <span className="ml-1 tabular-nums">{cantidad}</span>
+          </Button>;
+        })}
+      </div>
+
       {lista.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">—</p>
+        <p role="status" className={`rounded-2xl px-5 py-12 text-center text-sm text-muted-foreground ${cristal}`}>
+          {t(catalogo.length === 0 ? "paquetes.catalogoVacio" : "paquetes.sinResultados")}
+        </p>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {lista.map((paquete, indice) => {
+          {lista.map(({ paquete, estado }, indice) => {
             const Icono = ICONOS[paquete.icono] || Palmtree;
+            const cupos = obtenerCupos(paquete);
+            const lleno = estado === "lleno";
+            const enViaje = estado === "en_viaje";
+            const incompleto = estado === "incompleto";
+            const superficie = lleno
+              ? "border-slate-300 bg-slate-100 dark:border-slate-600 dark:bg-slate-800"
+              : enViaje ? "border-sky-300 bg-sky-50 dark:border-sky-700 dark:bg-sky-950"
+                : incompleto ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950" : "border-border/70 bg-card/80";
+            const cabecera = lleno ? "bg-slate-300 dark:bg-slate-700" : enViaje
+              ? "bg-sky-200 dark:bg-sky-900" : incompleto ? "bg-amber-100 dark:bg-amber-900" : "bg-gradient-to-br from-sky-500 to-blue-600";
             return (
           <motion.div key={paquete.nombre} variants={aparecer} custom={indice} initial="hidden" animate="show">
-            <TarjetaIluminada className={`overflow-hidden rounded-2xl ${cristal} transition-transform hover:-translate-y-1`} spotlightColor="rgba(37,99,235,0.12)">
-              <div className="grid h-28 place-items-center bg-gradient-to-br from-sky-500 to-blue-600">
-                <Icono className="h-12 w-12 text-white" strokeWidth={1.5} />
+            <article aria-label={`${paquete.nombre}: ${t(`paquetes.estado.${estado}`)}`}
+              className={`h-full overflow-hidden rounded-2xl border shadow-sm ${superficie}`}>
+              <div className={`relative flex min-h-32 flex-col items-center justify-center gap-2 px-4 py-5 ${cabecera}`}>
+                <Icono aria-hidden="true" className={`h-12 w-12 ${estado === "disponible" ? "text-white" : "text-slate-600 dark:text-slate-300"}`} strokeWidth={1.5} />
+                <span className={`rounded-lg px-3 py-1.5 text-center font-bold tracking-wide ${lleno
+                  ? "bg-slate-800 text-lg text-white dark:bg-slate-200 dark:text-slate-900"
+                  : enViaje ? "bg-sky-800 text-lg text-white dark:bg-sky-200 dark:text-sky-950"
+                    : incompleto ? "bg-amber-800 text-sm text-white dark:bg-amber-200 dark:text-amber-950"
+                      : "bg-white/20 text-xs text-white"}`}>
+                  {t(`paquetes.estado.${estado}`)}
+                </span>
               </div>
               <div className="p-4">
                 <b className="text-[15px] text-foreground">{paquete.nombre}</b>
                 <div className="mb-3 mt-0.5 text-xs text-muted-foreground">{paquete.ubicacion}</div>
-                <div className="text-lg font-bold text-blue-600">{paquete.precio}</div>
-                <div className="mt-1.5 text-[11.5px] text-muted-foreground">{paquete.cupo}</div>
+                <div className={`break-words text-lg font-bold ${lleno ? "text-slate-600 dark:text-slate-300" : "text-blue-700 dark:text-sky-300"}`}>{mostrarDinero(paquete.precio)}</div>
+                <p className="mt-2 text-xs font-semibold text-foreground">{cupos
+                  ? `${cupos.disponibles} / ${cupos.capacidad} · ${t("paquetes.cuposDisponibles")}` : t("paquetes.cuposSinDefinir")}</p>
+                {paquete.cupo?.includes("·") && <p className="mt-1 text-xs text-muted-foreground">{paquete.cupo.split("·").slice(1).join("·").trim()}</p>}
+                <p className="mt-2 text-xs text-muted-foreground">{t(`paquetes.detalle.${estado}`)}</p>
                 {(paquete.salida || paquete.regreso) && (
-                  <div className="mt-2 flex items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground">
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-[11px] text-muted-foreground">
                     <CalendarDays className="h-3.5 w-3.5 text-blue-500" />
                     <span>{t("pkg.salida")}: <b className="font-medium text-foreground">{paquete.salida || "—"}</b></span>
                     <span>· {t("pkg.regreso")}: <b className="font-medium text-foreground">{paquete.regreso || "—"}</b></span>
                   </div>
                 )}
               </div>
-            </TarjetaIluminada>
+            </article>
           </motion.div>
             );
           })}
@@ -445,14 +489,14 @@ function VistaReportes({ datos }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          { lbl: "Pagos registrados", to: ventas / 1000000, prefix: "$ ", suffix: " M", decimals: 1 },
-          { lbl: "Pago promedio", to: pagos.length ? ventas / pagos.length / 1000000 : 0, prefix: "$ ", suffix: " M", decimals: 1 },
+          { lbl: "Pagos registrados", to: ventas, prefix: "$ " },
+          { lbl: "Pago promedio", to: pagos.length ? Math.round(ventas / pagos.length) : 0, prefix: "$ " },
           { lbl: "Reservas registradas", to: reservas.length },
         ].map((k, i) => (
           <motion.div key={k.lbl} variants={aparecer} custom={i} initial="hidden" animate="show">
             <TarjetaIluminada className={`rounded-2xl p-5 ${cristal}`} spotlightColor="rgba(37,99,235,0.12)">
               <p className="mb-2 text-[13px] text-muted-foreground">{k.lbl}</p>
-              <p className="text-[27px] font-bold text-foreground">
+              <p className="break-words text-[clamp(1.05rem,2vw,1.6875rem)] font-bold text-foreground">
                 <ContadorAnimado to={k.to} prefix={k.prefix || ""} suffix={k.suffix || ""} decimals={k.decimals || 0} duration={1.6} />
               </p>
             </TarjetaIluminada>
@@ -493,11 +537,9 @@ function VistaReportes({ datos }) {
 }
 
 /* --------------------------- Formularios por entidad --------------------------- */
-const hoy = () => new Date().toISOString().slice(0, 10);
+const hoy = fechaColombia;
 const n4 = () => Math.floor(1000 + Math.random() * 9000);
 const n6 = () => Math.floor(100000 + Math.random() * 900000);
-const leerDinero = (valor) => Number(String(valor ?? "").replace(/[^\d]/g, "")) || 0;
-const mostrarDinero = (valor) => "$ " + Math.round(valor).toLocaleString("es-CO");
 
 // Cada formulario indica la tabla, los campos y cómo construir el registro.
 const FORMULARIOS = {
@@ -557,13 +599,13 @@ const FORMULARIOS = {
       { key: "reserva", label: "Reserva", select: "reservas", half: true },
       { key: "cliente", label: "Cliente", select: "clientes", half: true },
       { key: "metodo", label: "Método", select: ["Tarjeta crédito", "Transferencia", "PSE", "Efectivo", "Nequi"], half: true },
-      { key: "valor", label: "Valor", ph: "$ 1.000.000", half: true },
+      { key: "valor", label: "Valor", ph: "$ 1.000.000", moneda: true, half: true },
     ],
     construir: (valores) => {
       const recibo = "#PG-" + n4();
       return {
-        datos: { recibo, reserva: valores.reserva, cliente: valores.cliente, metodo: valores.metodo, valor: valores.valor, fecha: hoy(), tono: "warn", estado: "Abono" },
-        fila: [recibo, valores.reserva, valores.cliente, valores.metodo, valores.valor, hoy(), "warn", "Abono"],
+        datos: { recibo, reserva: valores.reserva, cliente: valores.cliente, metodo: valores.metodo, valor: mostrarDinero(valores.valor), fecha: hoy(), tono: "warn", estado: "Abono" },
+        fila: [recibo, valores.reserva, valores.cliente, valores.metodo, mostrarDinero(valores.valor), hoy(), "warn", "Abono"],
       };
     },
   },
@@ -573,13 +615,13 @@ const FORMULARIOS = {
       { key: "cliente", label: "Cliente", select: "clientes" },
       { key: "nit", label: "NIT / CC", ph: "900.000.000-0", half: true },
       { key: "reserva", label: "Reserva", select: "reservas", half: true },
-      { key: "valor", label: "Valor + IVA", ph: "$ 6.480.000" },
+      { key: "valor", label: "Valor + IVA", ph: "$ 6.480.000", moneda: true },
     ],
     construir: (valores) => {
       const factura = "FE-" + n6();
       return {
-        datos: { factura, cliente: valores.cliente, nit: valores.nit, reserva: valores.reserva, valor: valores.valor, fecha: hoy(), tono: "info", estado: "Enviada" },
-        fila: [factura, valores.cliente, valores.nit, valores.reserva, valores.valor, hoy(), "info", "Enviada"],
+        datos: { factura, cliente: valores.cliente, nit: valores.nit, reserva: valores.reserva, valor: mostrarDinero(valores.valor), fecha: hoy(), tono: "info", estado: "Enviada" },
+        fila: [factura, valores.cliente, valores.nit, valores.reserva, mostrarDinero(valores.valor), hoy(), "info", "Enviada"],
       };
     },
   },
@@ -601,17 +643,29 @@ const FORMULARIOS = {
     campos: [
       { key: "nombre", label: "Nombre del paquete", ph: "Ej. Cancún Paraíso" },
       { key: "loc", label: "Ubicación / duración", ph: "México · 7 días / 6 noches" },
-      { key: "precio", label: "Precio", ph: "$ 6.480.000", half: true },
-      { key: "cupo", label: "Cupos", ph: "Cupos: 12 / 40", half: true },
+      { key: "precio", label: "Precio", ph: "$ 6.480.000", moneda: true, half: true },
+      { key: "capacidad", label: "Capacidad total", ph: "40", type: "number", half: true },
+      { key: "disponibles", label: "Cupos disponibles", ph: "12", type: "number", half: true },
       { key: "salida", label: "Fecha de salida", type: "date", half: true },
       { key: "regreso", label: "Fecha de regreso", type: "date", half: true },
       { key: "icono", label: "Ícono", select: ["umbrella", "landmark", "waves", "ferriswheel", "mountain", "building"] },
     ],
     construir: (valores) => {
       const icono = valores.icono || "umbrella";
+      const capacidad = Number(valores.capacidad);
+      const disponibles = Number(valores.disponibles);
+      if (!String(valores.capacidad).trim() || !String(valores.disponibles).trim()
+        || !Number.isSafeInteger(capacidad) || capacidad <= 0
+        || !Number.isSafeInteger(disponibles) || disponibles < 0 || disponibles > capacidad) {
+        throw new Error("Indica capacidad total y cupos disponibles enteros. La capacidad debe ser positiva y los disponibles deben estar entre cero y la capacidad.");
+      }
+      if (!valores.salida || !valores.regreso || valores.regreso < valores.salida) {
+        throw new Error("Indica salida y regreso. El regreso no puede ser anterior a la salida.");
+      }
+      const cupo = `Cupos: ${disponibles} / ${capacidad}`;
       return {
-        datos: { nombre: valores.nombre, loc: valores.loc, precio: valores.precio, cupo: valores.cupo, icono, salida: valores.salida || null, regreso: valores.regreso || null },
-        fila: { icono, nombre: valores.nombre, ubicacion: valores.loc, precio: valores.precio, cupo: valores.cupo, salida: valores.salida || "", regreso: valores.regreso || "" },
+        datos: { nombre: valores.nombre, loc: valores.loc, precio: mostrarDinero(valores.precio), cupo, icono, salida: valores.salida, regreso: valores.regreso },
+        fila: { icono, nombre: valores.nombre, ubicacion: valores.loc, precio: mostrarDinero(valores.precio), cupo, salida: valores.salida, regreso: valores.regreso },
       };
     },
   },
@@ -667,6 +721,8 @@ function DialogoAgregar({ label: etiqueta, title: titulo, fields: campos, onSubm
                         : opcionesDe(campo).map((opcion) => <SelectItem key={opcion} value={opcion}>{opcion}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                ) : campo.moneda ? (
+                  <CampoDinero id={campo.key} valor={valores[campo.key]} alCambiar={(valor) => elegirCampo(campo.key, valor)} placeholder={campo.ph} />
                 ) : (
                   <Input id={campo.key} type={campo.type || "text"} value={valores[campo.key]} onChange={cambiarCampo(campo.key)}
                     placeholder={campo.ph || ""} min={campo.type === "date" ? hoy() : undefined} />
@@ -920,6 +976,7 @@ function useEntidades() {
 /* ------------------------------- Panel principal ----------------------------- */
 function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso }) {
   const { t } = useIdioma();
+  const fechaCatalogo = useFechaColombia();
   const [vista, cambiarVista] = useState("dash");
   const [menuAbierto, cambiarMenu] = useState(false);
   const { datos, setDatos, origen, error: errorDatos } = useEntidades();
@@ -929,7 +986,7 @@ function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso 
   // Opciones para los menús desplegables (se arman con lo que ya existe)
   const opciones = {
     clientes: datos.clientes.map((cliente) => cliente[1]),
-    paquetes: datos.paquetes.map((paquete) => paquete.nombre),
+    paquetes: datos.paquetes.filter((paquete) => estadoPaquete(paquete, fechaCatalogo) === "disponible").map((paquete) => paquete.nombre),
     reservas: datos.reservas.map((reserva) => reserva[0]),
   };
 
@@ -946,10 +1003,18 @@ function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso 
 
   // Nueva reserva -> arranca "Pendiente" y genera su factura automáticamente
   const agregarReserva = async (valores) => {
+    const paqueteElegido = datos.paquetes.find((paquete) => paquete.nombre === valores.paquete);
+    if (!paqueteElegido || estadoPaquete(paqueteElegido) !== "disponible") {
+      throw new Error(t("paquetes.noReservable"));
+    }
+    const viajeros = Number(valores.pax);
+    if (!Number.isSafeInteger(viajeros) || viajeros <= 0 || viajeros > obtenerCupos(paqueteElegido).disponibles) {
+      throw new Error(t("paquetes.viajerosInvalidos"));
+    }
     const { datos: datosReservaInicial, fila } = FORMULARIOS.reservas.construir(valores);
     const filaReserva = [...fila]; filaReserva[6] = "bad"; filaReserva[7] = "Pendiente";
     const datosReserva = { ...datosReservaInicial, tono: "bad", estado: "Pendiente" };
-    const precio = datos.paquetes.find((paquete) => paquete.nombre === valores.paquete)?.precio || "$ 0";
+    const precio = mostrarDinero(paqueteElegido.precio);
     const nit = datos.clientes.find((cliente) => cliente[1] === valores.cliente)?.[2] || "";
     const factura = "FE-" + n6();
     const filaFactura = [factura, valores.cliente, nit, datosReservaInicial.codigo, precio, hoy(), "warn", "Por validar"];
@@ -1044,11 +1109,11 @@ function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso 
       case "pagos":
         return <VistaDatos titulo={t("nav.pagos")} accion={accionAgregar("pagos")}
           columnas={["Recibo", "Reserva", "Cliente", "Método", "Valor", "Fecha", "Estado"]}
-          filas={datos.pagos.map((fila) => [fila[0], fila[1], fila[2], fila[3], fila[4], fila[5], { tono: fila[6], texto: fila[7] }])} />;
+          filas={datos.pagos.map((fila) => [fila[0], fila[1], fila[2], fila[3], mostrarDinero(fila[4]), fila[5], { tono: fila[6], texto: fila[7] }])} />;
       case "facturas":
         return <VistaDatos titulo={t("nav.facturas")} accion={accionAgregar("facturas")}
           columnas={["Factura", "Cliente", "NIT / CC", "Reserva", "Valor + IVA", "Fecha", "Estado DIAN"]}
-          filas={datos.facturas.map((fila) => [fila[0], fila[1], fila[2], fila[3], fila[4], fila[5], { tono: fila[6], texto: fila[7] }])} />;
+          filas={datos.facturas.map((fila) => [fila[0], fila[1], fila[2], fila[3], mostrarDinero(fila[4]), fila[5], { tono: fila[6], texto: fila[7] }])} />;
       case "proveedores":
         return <VistaDatos titulo={t("nav.proveedores")} accion={accionAgregar("proveedores")}
           columnas={["Proveedor", "Tipo", "Contacto", "Convenio", "Estado"]}
@@ -1060,16 +1125,15 @@ function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso 
 
   return (
     <div className="relative z-10 flex min-h-screen">
-      <motion.aside
-        initial={{ x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}
-        className={`fixed z-30 h-screen w-64 shrink-0 border-r border-border bg-sidebar p-4 backdrop-blur-xl transition-transform md:sticky md:top-0 md:translate-x-0 ${menuAbierto ? "translate-x-0" : "-translate-x-full"}`}
-      >
+      <BarraLateral abierta={menuAbierto}>
+        <CabeceraBarraLateral>
         <button type="button" onClick={() => { cambiarVista("dash"); cambiarMenu(false); }} title={t("nav.dash")}
-          className="mb-6 flex w-full items-center gap-3 rounded-xl px-2 py-1 transition-colors hover:bg-sky-50 dark:hover:bg-sky-400/10">
+          className="flex w-full items-center gap-3 rounded-xl px-2 py-1 transition-colors hover:bg-sky-50 dark:hover:bg-sky-400/10">
           <Marca tamano="h-10 w-10" imagen="h-8 w-8" />
           <span className="text-lg font-bold text-foreground">Nóva<TextoDegradado colors={coloresMarca}>Travel</TextoDegradado></span>
         </button>
-        <nav className="space-y-1">
+        </CabeceraBarraLateral>
+        <ContenidoBarraLateral etiqueta={t("paquetes.navegacion")}>
           {NAVEGACION.map((opcion) => (
             <div key={opcion.id}>
               {opcion.group && <p className="mb-1 mt-4 px-2 text-[10.5px] font-semibold uppercase tracking-widest text-slate-400">{t("grp." + opcion.group)}</p>}
@@ -1085,12 +1149,27 @@ function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso 
               </button>
             </div>
           ))}
-        </nav>
-      </motion.aside>
+        </ContenidoBarraLateral>
+        <PieBarraLateral>
+          <Button variant="ghost" onClick={alSalir}
+            className="w-full justify-start gap-3 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400">
+            <LogOut aria-hidden="true" className="h-4 w-4" />{t("paquetes.cerrarSesion")}
+          </Button>
+          <div className="flex min-w-0 items-center gap-3 rounded-xl bg-muted/60 px-3 py-3">
+            <div aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-sm font-bold text-white">
+              {perfil.nombre.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground" title={perfil.nombre}>{perfil.nombre}</p>
+              <p className="truncate text-xs text-muted-foreground" title={perfil.correo || t("acceso.demo")}>{perfil.correo || t("acceso.demo")}</p>
+            </div>
+          </div>
+        </PieBarraLateral>
+      </BarraLateral>
 
       {menuAbierto && <div className="fixed inset-0 z-20 bg-slate-900/20 md:hidden" onClick={() => cambiarMenu(false)} />}
 
-      <main className="min-h-screen min-w-0 flex-1 p-6 md:p-8">
+      <main className="min-h-screen min-w-0 flex-1 p-6 md:ml-64 md:p-8">
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
           className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -1107,13 +1186,6 @@ function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso 
               <input placeholder={t("tb.search")} className="w-32 bg-transparent text-foreground outline-none placeholder:text-slate-400" />
             </div>
             <ControlesSuperiores oscuro={oscuro} cambiarOscuro={cambiarOscuro} />
-            <div className={`hidden items-center gap-2 rounded-xl px-3 py-1.5 sm:flex ${cristal}`}>
-              <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-xs font-bold text-white">{perfil.nombre.slice(0, 2).toUpperCase()}</div>
-              <span className="hidden text-sm text-foreground md:inline">{perfil.nombre}</span>
-            </div>
-            <Button variant="outline" aria-label={t("tb.logout")} onClick={alSalir} className="gap-2 border-border text-muted-foreground hover:border-rose-400 hover:text-rose-500">
-              <LogOut className="h-4 w-4" /><span className="hidden sm:inline">{t("tb.logout")}</span>
-            </Button>
           </div>
         </motion.div>
 

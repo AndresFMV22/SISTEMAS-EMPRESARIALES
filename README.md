@@ -47,7 +47,7 @@ electrónica y control de proveedores y personal.
 La aplicación es un **SPA (Single Page Application)** que funciona de dos maneras:
 
 - **Con Supabase** — datos reales persistentes en PostgreSQL.
-- **Sin configurar** — arranca con datos de demostración (35+ registros por módulo),
+- **Sin configurar** — arranca con una muestra reducida de datos de demostración,
   ideal para probar o presentar sin instalar nada. Un indicador en la barra superior
   muestra en qué modo está (**Base de datos** / **Datos demo**).
 
@@ -60,7 +60,7 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
 | Módulo | Qué hace |
 |--------|----------|
 | **Login** | Acceso interno con validación de credenciales. |
-| **Dashboard** | KPIs animados, gráfico de ventas por mes, destinos más solicitados y **filtro de reservas por rango de fechas**. |
+| **Resumen** | Indicadores de registros actuales, gráfico de pagos por mes, paquetes más reservados y **filtro de reservas por rango de fechas**. |
 | **Clientes** | Alta de clientes y, en lugar de borrar, **activar/desactivar** con **observaciones y vigencia (rango de fechas)** para no perder información valiosa. |
 | **Empleados** | Gestión del personal con la misma lógica de **activo/inactivo + observaciones** (útil ante retiros o despidos sin perder el histórico). |
 | **Paquetes turísticos** | Catálogo con precio, cupos, **fechas de salida y regreso** y **filtro por fecha de salida**. |
@@ -68,7 +68,7 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
 | **Pagos** | Flujo de pago con **total, abonado y saldo**; permite **abonos parciales** y **valida que no se pague más que el saldo pendiente**. |
 | **Facturación** | Facturación electrónica ligada a cada reserva, con estados (*Por validar, Enviada, Aceptada*). |
 | **Proveedores** | Aerolíneas, hoteles y operadores con tipo, contacto y convenio. |
-| **Reportes** | Indicadores de ventas por asesor y distribución por tipo de viaje. |
+| **Reportes** | Pagos registrados, reservas por asesor y distribución por tipo de viaje calculados desde los registros. |
 
 ### Experiencia de usuario
 
@@ -76,7 +76,7 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
 - **Multi-idioma**: Español, English, Français, Русский, Português.
 - **Banner de cookies** y **políticas de privacidad y de cookies**.
 - **Menús desplegables** que se autocompletan con los clientes, paquetes y reservas existentes para agilizar el registro.
-- **Efectos visuales** estilo [React Bits](https://reactbits.dev): fondo *Squares*, *SpotlightCard*, *ShinyText*, *GradientText*, *ClickSpark*, *CountUp* y *StarBorder*.
+- **Efectos visuales** estilo [React Bits](https://reactbits.dev): *Cuadricula*, *TarjetaIluminada*, *TextoBrillante*, *TextoDegradado*, *ChispasAlClic*, *ContadorAnimado* y *BordeBrillante*.
 - **Responsive** (escritorio, tablet y móvil).
 
 ---
@@ -120,7 +120,7 @@ Abre **http://localhost:5173** e ingresa con `admin` / `agencia2026`.
 1. Crea un proyecto en [supabase.com](https://supabase.com).
 2. Abre **SQL Editor → New query**, pega el contenido de
    [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**.
-   Esto crea las tablas, carga **35+ registros de ejemplo** por módulo y habilita
+   Esto crea las tablas, carga una **muestra pequeña de registros** y habilita
    las políticas de acceso (RLS).
 3. En **Project Settings → API** copia la **Project URL** y la **anon/publishable key**
    a tu archivo `.env.local` (ver abajo).
@@ -128,8 +128,9 @@ Abre **http://localhost:5173** e ingresa con `admin` / `agencia2026`.
 
 **Tablas:** `clientes` · `paquetes` · `reservas` · `pagos` · `facturas` · `proveedores` · `empleados`
 
-> El script hace `drop table ... cascade` antes de crear, así que puedes re-ejecutarlo
-> las veces que quieras sin duplicar datos.
+> El script no borra tablas ni registros existentes; puedes re-ejecutarlo
+> sin duplicar los registros de muestra. También agrega las columnas que
+> faltan en tablas `clientes` y `paquetes` de versiones anteriores.
 
 ---
 
@@ -160,8 +161,8 @@ agencia-viajes-app/
 │  ├─ index.css                # tema (tokens claro/oscuro) y estilos de efectos
 │  ├─ components/
 │  │  ├─ ui/                   # componentes shadcn/ui (button, card, table, dialog, select...)
-│  │  └─ reactbits/            # efectos: Squares, SpotlightCard, ShinyText,
-│  │                           #          GradientText, ClickSpark, CountUp, StarBorder
+│  │  └─ reactbits/            # efectos: Cuadricula, TarjetaIluminada, TextoBrillante,
+│  │                           #          TextoDegradado, ChispasAlClic, ContadorAnimado, BordeBrillante
 │  └─ lib/
 │     ├─ supabase.js           # cliente de Supabase
 │     ├─ db.js                 # consultas, inserciones y actualizaciones

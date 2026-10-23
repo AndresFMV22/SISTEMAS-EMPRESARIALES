@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, Palmtree, CalendarDays, CreditCard,
-  ReceiptText, Building2, BarChart3, Search, LogOut, Menu, TrendingUp,
-  TrendingDown, Plus, Umbrella, Landmark, Waves, FerrisWheel, Mountain,
+  ReceiptText, Building2, BarChart3, Search, LogOut, Menu,
+  Plus, Umbrella, Landmark, Waves, FerrisWheel, Mountain,
   Building, Bus, Ship, Plane, Database, CircleAlert, Check,
-  Moon, Sun, Languages, Shield, Cookie, MessageSquarePlus, Power, X, Filter,
+  Moon, Sun, Languages, Shield, Cookie, MessageSquarePlus, Power, Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,44 +21,47 @@ import {
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
-import Squares from "@/components/reactbits/Squares";
-import ClickSpark from "@/components/reactbits/ClickSpark";
-import SpotlightCard from "@/components/reactbits/SpotlightCard";
-import GradientText from "@/components/reactbits/GradientText";
-import ShinyText from "@/components/reactbits/ShinyText";
-import CountUp from "@/components/reactbits/CountUp";
-import StarBorder from "@/components/reactbits/StarBorder";
-import { isSupabaseReady } from "@/lib/supabase";
-import { fetchEntities, insertRow, updateRows } from "@/lib/db";
-import { DEMO } from "@/lib/demoData";
-import { useLang, LANGS } from "@/lib/i18n.jsx";
+import Cuadricula from "@/components/reactbits/Cuadricula";
+import ChispasAlClic from "@/components/reactbits/ChispasAlClic";
+import TarjetaIluminada from "@/components/reactbits/TarjetaIluminada";
+import TextoDegradado from "@/components/reactbits/TextoDegradado";
+import ContadorAnimado from "@/components/reactbits/ContadorAnimado";
+import BordeBrillante from "@/components/reactbits/BordeBrillante";
+import { supabaseConfigurado } from "@/lib/supabase";
+import { obtenerEntidades, insertarFila, actualizarFilas } from "@/lib/db";
+import { DATOS_DEMO } from "@/lib/demoData";
+import { useIdioma, IDIOMAS } from "@/lib/i18n.jsx";
+import PuertaAcceso from "@/components/PuertaAcceso";
+import GestionAccesosEmpleados from "@/components/GestionAccesosEmpleados";
 
 const LOGO = "/logo-mark.png";
 
-/* ------------------------- Datos de demostración ------------------------- */
-const KPIS = [
-  { lbl: "Reservas activas", to: 1284, delta: "+12,4% vs. mes anterior", up: true },
-  { lbl: "Ingresos del mes", to: 342, prefix: "$ ", suffix: " M", delta: "+8,1%", up: true },
-  { lbl: "Clientes registrados", to: 3917, delta: "+214 nuevos", up: true },
-  { lbl: "Cupos disponibles", to: 486, delta: "-6,3%", up: false },
-];
+// Indicadores derivados de las mismas filas que muestran las tablas.
+function crearIndicadores({ clientes, paquetes, reservas, pagos }) {
+  const ingresos = pagos.reduce((total, pago) => total + leerDinero(pago[4]), 0);
+  const cupos = paquetes.reduce((total, paquete) => total + (Number(paquete.cupo?.match(/Cupos:\s*(\d+)/i)?.[1]) || 0), 0);
+  return [
+    { lbl: "Reservas activas", to: reservas.filter((reserva) => !["Cancelada", "Finalizada"].includes(reserva[7])).length },
+    { lbl: "Pagos registrados", to: ingresos / 1000000, prefix: "$ ", suffix: " M", decimals: 1 },
+    { lbl: "Clientes registrados", to: clientes.length },
+    { lbl: "Cupos mostrados", to: cupos },
+  ];
+}
 
-const VENTAS = [
-  ["Ene", 180], ["Feb", 210], ["Mar", 260], ["Abr", 230], ["May", 300],
-  ["Jun", 280], ["Jul", 340], ["Ago", 310], ["Sep", 342],
-];
+function ventasPorMes(pagos) {
+  const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  return meses.map((mes, indice) => [mes, pagos.filter((pago) => Number(pago[5]?.slice(5, 7)) === indice + 1).reduce((suma, pago) => suma + leerDinero(pago[4]), 0) / 1000000]);
+}
 
-const DESTINOS = [
-  { n: "Cancún", d: "México · playa todo incluido", p: 24 },
-  { n: "Madrid", d: "España · city tour", p: 18 },
-  { n: "San Andrés", d: "Colombia · isla", p: 16 },
-  { n: "Orlando", d: "USA · parques", p: 13 },
-  { n: "Cusco", d: "Perú · Machu Picchu", p: 11 },
-];
+function paquetesMasReservados(reservas) {
+  const cantidades = new Map();
+  reservas.forEach((reserva) => cantidades.set(reserva[2], (cantidades.get(reserva[2]) || 0) + 1));
+  return [...cantidades].sort((primero, segundo) => segundo[1] - primero[1]).slice(0, 5);
+}
 
-const ICONS = { umbrella: Umbrella, landmark: Landmark, waves: Waves, ferriswheel: FerrisWheel, mountain: Mountain, building: Building };
+const ICONOS = { umbrella: Umbrella, landmark: Landmark, waves: Waves, ferriswheel: FerrisWheel, mountain: Mountain, building: Building };
 
-const NAV = [
+const NAVEGACION = [
   { id: "dash", icon: LayoutDashboard, group: null },
   { id: "clientes", icon: Users, group: "operacion" },
   { id: "paquetes", icon: Palmtree, group: null },
@@ -71,16 +74,16 @@ const NAV = [
 ];
 
 /* ------------------------------ Utilidades UI ------------------------------ */
-const pillClass = {
+const estilosEstado = {
   ok: "bg-emerald-500/12 text-emerald-600 border-emerald-500/25",
   warn: "bg-amber-500/12 text-amber-600 border-amber-500/25",
   bad: "bg-rose-500/12 text-rose-600 border-rose-500/25",
   info: "bg-sky-500/12 text-sky-600 border-sky-500/25",
 };
-function Pill({ tone, children }) {
+function EtiquetaEstado({ tono, children }) {
   return (
-    <Badge variant="outline" className={`rounded-full font-semibold ${pillClass[tone] || pillClass.info}`}>
-      {(tone === "ok" || tone === "bad") && (
+    <Badge variant="outline" className={`rounded-full font-semibold ${estilosEstado[tono] || estilosEstado.info}`}>
+      {(tono === "ok" || tono === "bad") && (
         <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
       )}
       {children}
@@ -88,188 +91,116 @@ function Pill({ tone, children }) {
   );
 }
 
-function Mono({ text }) {
+function Iniciales({ texto }) {
   return (
     <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-xs font-bold text-blue-700 dark:text-sky-300">
-      {text.slice(0, 2).toUpperCase()}
+      {texto.slice(0, 2).toUpperCase()}
     </div>
   );
 }
 
-function LogoMark({ size = "h-12 w-12", img = "h-10 w-10" }) {
+function Marca({ tamano = "h-12 w-12", imagen = "h-10 w-10" }) {
   return (
-    <div className={`grid ${size} place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(37,99,235,0.22)] ring-1 ring-blue-100`}>
-      <img src={LOGO} alt="NóvaTravel" className={`${img} object-contain`} />
+    <div className={`grid ${tamano} place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(37,99,235,0.22)] ring-1 ring-blue-100`}>
+      <img src={LOGO} alt="NóvaTravel" className={`${imagen} object-contain`} />
     </div>
   );
 }
 
-const glass = "border border-border/70 bg-card/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(2,32,90,0.06)]";
+const cristal = "border border-border/70 bg-card/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(2,32,90,0.06)]";
 
-const fade = {
+const aparecer = {
   hidden: { opacity: 0, y: 18 },
   show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] } }),
 };
 
-const brandColors = ["#2563eb", "#0ea5e9", "#2563eb"];
-
-/* --------------------------------- Login --------------------------------- */
-function Login({ onLogin }) {
-  const { t } = useLang();
-  const [usr, setUsr] = useState("");
-  const [pwd, setPwd] = useState("");
-  const [err, setErr] = useState("");
-  const [shake, setShake] = useState(0);
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (usr.trim() === "admin" && pwd === "agencia2026") onLogin();
-    else { setErr(t("login.bad")); setShake((s) => s + 1); }
-  };
-
-  return (
-    <div className="relative z-10 flex min-h-screen items-center justify-center p-5">
-      <motion.form
-        onSubmit={submit}
-        initial="hidden"
-        animate="show"
-        variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } } }}
-        key={shake}
-        className={`relative w-full max-w-[420px] rounded-3xl p-9 ${glass}`}
-      >
-        <motion.div animate={err ? { x: [0, -9, 9, -6, 6, 0] } : {}} transition={{ duration: 0.4 }} className="flex flex-col gap-1">
-          <motion.div variants={fade} custom={0} className="mb-1 flex items-center justify-center gap-3">
-            <LogoMark />
-            <span className="text-2xl font-bold tracking-wide text-foreground">
-              Nóva<GradientText colors={brandColors} className="align-baseline">Travel</GradientText>
-            </span>
-          </motion.div>
-
-          <motion.p variants={fade} custom={1} className="mb-7 text-center text-sm">
-            <ShinyText text={t("app.tagline")} speed={4} />
-          </motion.p>
-
-          <motion.div variants={fade} custom={2} className="mb-4">
-            <label className="mb-2 block text-xs font-medium tracking-wide text-blue-700 dark:text-sky-300">{t("login.user")}</label>
-            <Input value={usr} onChange={(e) => setUsr(e.target.value)}
-              placeholder={t("login.userPh")} autoComplete="off" className="h-11 border-border bg-background" />
-          </motion.div>
-
-          <motion.div variants={fade} custom={3} className="mb-6">
-            <label className="mb-2 block text-xs font-medium tracking-wide text-blue-700 dark:text-sky-300">{t("login.pass")}</label>
-            <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)}
-              placeholder="••••••••" className="h-11 border-border bg-background" />
-          </motion.div>
-
-          <motion.div variants={fade} custom={4}>
-            <Button type="submit"
-              className="h-12 w-full bg-gradient-to-br from-sky-500 to-blue-600 text-base font-semibold text-white shadow-[0_10px_30px_rgba(37,99,235,0.35)] transition-transform hover:-translate-y-0.5 hover:from-sky-400 hover:to-blue-500">
-              {t("login.enter")}
-            </Button>
-          </motion.div>
-
-          <div className="mt-3 min-h-5 text-center text-sm text-rose-500">{err}</div>
-
-          <motion.div variants={fade} custom={5}
-            className="mt-3 border-t border-dashed border-border pt-4 text-center text-[11.5px] leading-relaxed text-muted-foreground">
-            {t("login.access")}<br />
-            Usuario: <code className="rounded bg-sky-100 px-1.5 py-0.5 text-sky-700">admin</code>{" "}
-            Contraseña: <code className="rounded bg-sky-100 px-1.5 py-0.5 text-sky-700">agencia2026</code>
-          </motion.div>
-        </motion.div>
-      </motion.form>
-    </div>
-  );
-}
+const coloresMarca = ["#2563eb", "#0ea5e9", "#2563eb"];
 
 /* -------------------------------- Widgets -------------------------------- */
-function StatCard({ k, i }) {
+function TarjetaIndicador({ indicador, indice }) {
   return (
-    <motion.div variants={fade} custom={i} initial="hidden" animate="show">
-      <StarBorder color="#38bdf8" speed="6s" thickness={1}>
-        <SpotlightCard className={`rounded-2xl p-5 ${glass}`} spotlightColor="rgba(37,99,235,0.12)">
+    <motion.div variants={aparecer} custom={indice} initial="hidden" animate="show">
+      <BordeBrillante color="#38bdf8" speed="6s" thickness={1}>
+        <TarjetaIluminada className={`rounded-2xl p-5 ${cristal}`} spotlightColor="rgba(37,99,235,0.12)">
           <div className="relative z-[2]">
-            <p className="mb-2 text-[13px] text-muted-foreground">{k.lbl}</p>
+            <p className="mb-2 text-[13px] text-muted-foreground">{indicador.lbl}</p>
             <p className="text-[27px] font-bold text-foreground">
-              <CountUp to={k.to} prefix={k.prefix || ""} suffix={k.suffix || ""} duration={1.6} />
-            </p>
-            <p className={`mt-1.5 flex items-center gap-1 text-xs ${k.up ? "text-emerald-600" : "text-rose-500"}`}>
-              {k.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-              {k.delta}
+              <ContadorAnimado to={indicador.to} prefix={indicador.prefix || ""} suffix={indicador.suffix || ""} decimals={indicador.decimals || 0} duration={1.6} />
             </p>
           </div>
-        </SpotlightCard>
-      </StarBorder>
+        </TarjetaIluminada>
+      </BordeBrillante>
     </motion.div>
   );
 }
 
-function Panel({ title, tag, children, className = "" }) {
+function Panel({ titulo, etiqueta, children, className = "" }) {
   return (
-    <div className={`rounded-2xl p-5 ${glass} ${className}`}>
+    <div className={`rounded-2xl p-5 ${cristal} ${className}`}>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
-        {tag && <div className="text-[11px] font-medium text-blue-600">{tag}</div>}
+        <h3 className="text-[15px] font-semibold text-foreground">{titulo}</h3>
+        {etiqueta && <div className="text-[11px] font-medium text-blue-600">{etiqueta}</div>}
       </div>
       {children}
     </div>
   );
 }
 
-function BarChart() {
-  const max = Math.max(...VENTAS.map((m) => m[1]));
+function GraficoBarras({ pagos }) {
+  const ventas = ventasPorMes(pagos);
+  const maximo = Math.max(1, ...ventas.map((mes) => mes[1]));
   return (
     <div className="flex h-[180px] items-end gap-3.5 pt-2">
-      {VENTAS.map(([m, v], i) => (
-        <div key={m} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
+      {ventas.map(([mes, valor], indice) => (
+        <div key={mes} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
           <motion.div
             className="w-3/5 rounded-t-lg bg-gradient-to-b from-sky-400 to-blue-600 shadow-[0_4px_14px_rgba(37,99,235,0.25)] hover:brightness-110"
-            title={`$ ${v} M`}
+            title={`$ ${valor.toFixed(1)} M`}
             initial={{ height: 0 }}
-            animate={{ height: `${(v / max) * 100}%` }}
-            transition={{ delay: i * 0.06, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            animate={{ height: `${(valor / maximo) * 100}%` }}
+            transition={{ delay: indice * 0.06, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           />
-          <small className="text-[11px] text-muted-foreground">{m}</small>
+          <small className="text-[11px] text-muted-foreground">{mes}</small>
         </div>
       ))}
     </div>
   );
 }
 
-function Th({ children }) {
+function CabeceraTabla({ children }) {
   return <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground">{children}</TableHead>;
 }
 
 /* --------------------------------- Vistas -------------------------------- */
-function Dashboard({ reservas }) {
-  const { t } = useLang();
+function Resumen({ datos }) {
+  const { t } = useIdioma();
+  const { reservas, pagos } = datos;
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
-  const filtradas = reservas.filter((r) => {
-    const f = r[4];
-    if (desde && (!f || f < desde)) return false;
-    if (hasta && (!f || f > hasta)) return false;
+  const filtradas = reservas.filter((reserva) => {
+    const fecha = reserva[4];
+    if (desde && (!fecha || fecha < desde)) return false;
+    if (hasta && (!fecha || fecha > hasta)) return false;
     return true;
   });
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {KPIS.map((k, i) => <StatCard key={k.lbl} k={k} i={i} />)}
+        {crearIndicadores(datos).map((indicador, indice) => <TarjetaIndicador key={indicador.lbl} indicador={indicador} indice={indice} />)}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
-        <Panel title={t("dash.ventas")} tag="2026 · COP (M)"><BarChart /></Panel>
-        <Panel title={t("dash.destinos")} tag="Top 5">
+        <Panel titulo={t("dash.ventas")} etiqueta="COP (M)"><GraficoBarras pagos={pagos} /></Panel>
+        <Panel titulo={t("dash.destinos")} etiqueta="Top 5">
           <div className="divide-y divide-border">
-            {DESTINOS.map((d) => (
-              <div key={d.n} className="flex items-center gap-3 py-2.5 transition-all hover:pl-2">
-                <Mono text={d.n} />
+            {paquetesMasReservados(reservas).map(([nombre, cantidad]) => (
+              <div key={nombre} className="flex items-center gap-3 py-2.5 transition-all hover:pl-2">
+                <Iniciales texto={nombre} />
                 <div className="flex-1">
-                  <b className="text-sm text-foreground">{d.n}</b>
-                  <small className="block text-[11.5px] text-muted-foreground">{d.d}</small>
+                  <b className="text-sm text-foreground">{nombre}</b>
                 </div>
-                <span className="text-sm font-semibold text-blue-600">{d.p}%</span>
+                <span className="text-sm font-semibold text-blue-600">{cantidad}</span>
               </div>
             ))}
           </div>
@@ -277,7 +208,7 @@ function Dashboard({ reservas }) {
       </div>
 
       {/* Filtro de fechas explícito */}
-      <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl px-4 py-3 ${glass}`}>
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl px-4 py-3 ${cristal}`}>
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Filter className="h-4 w-4 text-blue-600" />{t("dash.filter")}
         </div>
@@ -297,21 +228,21 @@ function Dashboard({ reservas }) {
         </span>
       </div>
 
-      <Panel title={t("dash.recientes")} tag={<span className="text-[11px] font-medium text-blue-600 dark:text-sky-300">{t("col.fecha")}</span>}>
+      <Panel titulo={t("dash.recientes")} etiqueta={<span className="text-[11px] font-medium text-blue-600 dark:text-sky-300">{t("col.fecha")}</span>}>
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
-              <Th>{t("col.reserva")}</Th><Th>{t("col.cliente")}</Th><Th>{t("col.paquete")}</Th><Th>{t("col.fecha")}</Th><Th>{t("col.estado")}</Th>
+              <CabeceraTabla>{t("col.reserva")}</CabeceraTabla><CabeceraTabla>{t("col.cliente")}</CabeceraTabla><CabeceraTabla>{t("col.paquete")}</CabeceraTabla><CabeceraTabla>{t("col.fecha")}</CabeceraTabla><CabeceraTabla>{t("col.estado")}</CabeceraTabla>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtradas.slice(0, 12).map((r) => (
-              <TableRow key={r[0]} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
-                <TableCell className="font-medium text-foreground">{r[0]}</TableCell>
-                <TableCell>{r[1]}</TableCell>
-                <TableCell>{r[2]}</TableCell>
-                <TableCell>{r[4]}</TableCell>
-                <TableCell><Pill tone={r[6]}>{r[7]}</Pill></TableCell>
+          {filtradas.slice(0, 12).map((reserva) => (
+              <TableRow key={reserva[0]} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
+                <TableCell className="font-medium text-foreground">{reserva[0]}</TableCell>
+                <TableCell>{reserva[1]}</TableCell>
+                <TableCell>{reserva[2]}</TableCell>
+                <TableCell>{reserva[4]}</TableCell>
+                <TableCell><EtiquetaEstado tono={reserva[6]}>{reserva[7]}</EtiquetaEstado></TableCell>
               </TableRow>
             ))}
             {filtradas.length === 0 && (
@@ -324,23 +255,21 @@ function Dashboard({ reservas }) {
   );
 }
 
-function DataView({ title, cols, rows, cta, action }) {
-  const tag = action || (cta && (
-    <Button size="sm" className="h-8 gap-1 bg-gradient-to-br from-sky-500 to-blue-600 text-white"><Plus className="h-3.5 w-3.5" />{cta}</Button>
-  ));
+function VistaDatos({ titulo, columnas, filas, accion }) {
+  const etiqueta = accion;
   return (
-    <Panel title={title} tag={tag}>
+    <Panel titulo={titulo} etiqueta={etiqueta}>
       <Table>
         <TableHeader>
-          <TableRow className="border-border hover:bg-transparent">{cols.map((c) => <Th key={c}>{c}</Th>)}</TableRow>
+          <TableRow className="border-border hover:bg-transparent">{columnas.map((columna) => <CabeceraTabla key={columna}>{columna}</CabeceraTabla>)}</TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((r, ri) => (
-            <TableRow key={ri} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
-              {r.map((cell, ci) =>
-                cell && typeof cell === "object"
-                  ? <TableCell key={ci}><Pill tone={cell.tone}>{cell.text}</Pill></TableCell>
-                  : <TableCell key={ci} className={ci === 0 ? "font-medium text-foreground" : ""}>{cell}</TableCell>
+          {filas.map((fila, indiceFila) => (
+            <TableRow key={indiceFila} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
+              {fila.map((celda, indiceCelda) =>
+                celda && typeof celda === "object"
+                  ? <TableCell key={indiceCelda}><EtiquetaEstado tono={celda.tono}>{celda.texto}</EtiquetaEstado></TableCell>
+                  : <TableCell key={indiceCelda} className={indiceCelda === 0 ? "font-medium text-foreground" : ""}>{celda}</TableCell>
               )}
             </TableRow>
           ))}
@@ -350,49 +279,51 @@ function DataView({ title, cols, rows, cta, action }) {
   );
 }
 
-function PaymentDialog({ code, info, onPay }) {
-  const { t } = useLang();
-  const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState("");
+function DialogoPago({ codigo, informacion, alPagar }) {
+  const { t } = useIdioma();
+  const [abierto, setAbierto] = useState(false);
+  const [monto, setMonto] = useState("");
   const [error, setError] = useState("");
-  useEffect(() => { if (open) { setAmount(String(info.saldo)); setError(""); } }, [open, info.saldo]);
+  const [guardando, cambiarGuardando] = useState(false);
+  useEffect(() => { if (abierto) { setMonto(String(informacion.saldo)); setError(""); } }, [abierto, informacion.saldo]);
 
-  const submit = (e) => {
-    e.preventDefault();
-    const num = parseMoney(amount);
-    if (num <= 0) { setError(t("pay.min")); return; }
-    if (num > info.saldo) { setError(t("pay.over")); return; }
-    onPay(code, num);
-    setOpen(false);
+  const enviar = async (evento) => {
+    evento.preventDefault();
+    if (guardando) return;
+    const numero = leerDinero(monto);
+    if (numero <= 0) { setError(t("pay.min")); return; }
+    if (numero > informacion.saldo) { setError(t("pay.over")); return; }
+    cambiarGuardando(true); setError("");
+    try { await alPagar(codigo, numero); setAbierto(false); }
+    catch (fallo) { setError(fallo.message); }
+    finally { cambiarGuardando(false); }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 dark:border-sky-500/30 text-blue-700 dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-blue-400/15">
+    <Dialog open={abierto} onOpenChange={(valor) => { if (!guardando) setAbierto(valor); }}>
+      <DialogTrigger render={<Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 dark:border-sky-500/30 text-blue-700 dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-blue-400/15" />}>
           <CreditCard className="h-3.5 w-3.5" />{t("btn.pay")}
-        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
-        <DialogHeader><DialogTitle>{t("pay.title")} · {code}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("pay.title")} · {codigo}</DialogTitle></DialogHeader>
         <div className="space-y-1.5 rounded-xl border border-border bg-muted/40 p-3 text-sm">
-          <div className="flex justify-between"><span className="text-muted-foreground">{t("pay.total")}</span><b className="text-foreground">{fmtMoney(info.total)}</b></div>
-          <div className="flex justify-between"><span className="text-muted-foreground">{t("pay.paid")}</span><b className="text-emerald-600">{fmtMoney(info.pagado)}</b></div>
-          <div className="flex justify-between border-t border-border pt-1.5"><span className="font-medium text-foreground">{t("pay.saldo")}</span><b className="text-blue-600">{fmtMoney(info.saldo)}</b></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">{t("pay.total")}</span><b className="text-foreground">{mostrarDinero(informacion.total)}</b></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">{t("pay.paid")}</span><b className="text-emerald-600">{mostrarDinero(informacion.pagado)}</b></div>
+          <div className="flex justify-between border-t border-border pt-1.5"><span className="font-medium text-foreground">{t("pay.saldo")}</span><b className="text-blue-600">{mostrarDinero(informacion.saldo)}</b></div>
         </div>
-        {info.saldo <= 0 ? (
+        {informacion.saldo <= 0 ? (
           <p className="flex items-center justify-center gap-1 py-3 text-sm font-medium text-emerald-600"><Check className="h-4 w-4" />{t("pay.done")}</p>
         ) : (
-          <form onSubmit={submit} className="mt-3 space-y-3">
+          <form onSubmit={enviar} className="mt-3 space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="amount">{t("pay.amount")}</Label>
-              <Input id="amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" />
-              <p className="text-[11px] text-muted-foreground">{t("pay.maxHint")} {fmtMoney(info.saldo)}</p>
+              <Input id="amount" inputMode="numeric" value={monto} onChange={(evento) => setMonto(evento.target.value)} placeholder="0" />
+              <p className="text-[11px] text-muted-foreground">{t("pay.maxHint")} {mostrarDinero(informacion.saldo)}</p>
             </div>
-            {error && <p className="text-sm text-rose-500">{error}</p>}
+            {error && <p role="alert" className="text-sm text-rose-500">{error}</p>}
             <DialogFooter className="gap-2 sm:gap-2">
-              <DialogClose asChild><Button type="button" variant="outline">{t("btn.cancel")}</Button></DialogClose>
-              <Button type="submit" className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">{t("btn.pay")}</Button>
+              <DialogClose disabled={guardando} render={<Button type="button" variant="outline" />}>{t("btn.cancel")}</DialogClose>
+              <Button type="submit" disabled={guardando} className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">{t(guardando ? "acceso.esperar" : "btn.pay")}</Button>
             </DialogFooter>
           </form>
         )}
@@ -400,33 +331,32 @@ function PaymentDialog({ code, info, onPay }) {
     </Dialog>
   );
 }
-
-function ReservasView({ reservas, onPay, getInfo, action }) {
-  const { t } = useLang();
+function VistaReservas({ reservas, alPagar, obtenerSaldo, accion }) {
+  const { t } = useIdioma();
   return (
-    <Panel title={t("nav.reservas")} tag={action}>
+    <Panel titulo={t("nav.reservas")} etiqueta={accion}>
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-transparent">
-            <Th>{t("col.reserva")}</Th><Th>{t("col.cliente")}</Th><Th>{t("col.paquete")}</Th><Th>{t("col.pax")}</Th>
-            <Th>{t("col.fecha")}</Th><Th>{t("col.asesor")}</Th><Th>{t("col.estado")}</Th><Th>{t("col.accion")}</Th>
+            <CabeceraTabla>{t("col.reserva")}</CabeceraTabla><CabeceraTabla>{t("col.cliente")}</CabeceraTabla><CabeceraTabla>{t("col.paquete")}</CabeceraTabla><CabeceraTabla>{t("col.pax")}</CabeceraTabla>
+            <CabeceraTabla>{t("col.fecha")}</CabeceraTabla><CabeceraTabla>{t("col.asesor")}</CabeceraTabla><CabeceraTabla>{t("col.estado")}</CabeceraTabla><CabeceraTabla>{t("col.accion")}</CabeceraTabla>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {reservas.map((r) => (
-            <TableRow key={r[0]} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
-              <TableCell className="font-medium text-foreground">{r[0]}</TableCell>
-              <TableCell>{r[1]}</TableCell>
-              <TableCell>{r[2]}</TableCell>
-              <TableCell>{r[3]}</TableCell>
-              <TableCell>{r[4]}</TableCell>
-              <TableCell>{r[5]}</TableCell>
-              <TableCell><Pill tone={r[6]}>{r[7]}</Pill></TableCell>
+          {reservas.map((reserva) => (
+            <TableRow key={reserva[0]} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
+              <TableCell className="font-medium text-foreground">{reserva[0]}</TableCell>
+              <TableCell>{reserva[1]}</TableCell>
+              <TableCell>{reserva[2]}</TableCell>
+              <TableCell>{reserva[3]}</TableCell>
+              <TableCell>{reserva[4]}</TableCell>
+              <TableCell>{reserva[5]}</TableCell>
+              <TableCell><EtiquetaEstado tono={reserva[6]}>{reserva[7]}</EtiquetaEstado></TableCell>
               <TableCell>
-                {r[7] === "Pagada" ? (
+                {reserva[7] === "Pagada" ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-emerald-600"><Check className="h-4 w-4" />{t("st.paid")}</span>
                 ) : (
-                  <PaymentDialog code={r[0]} info={getInfo(r[0])} onPay={onPay} />
+                  <DialogoPago codigo={reserva[0]} informacion={obtenerSaldo(reserva[0])} alPagar={alPagar} />
                 )}
               </TableCell>
             </TableRow>
@@ -437,18 +367,18 @@ function ReservasView({ reservas, onPay, getInfo, action }) {
   );
 }
 
-function Paquetes({ paquetes, action }) {
-  const { t } = useLang();
+function VistaPaquetes({ paquetes, accion }) {
+  const { t } = useIdioma();
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
-  const lista = paquetes.filter((p) => {
-    if (desde && (!p.salida || p.salida < desde)) return false;
-    if (hasta && (!p.salida || p.salida > hasta)) return false;
+  const lista = paquetes.filter((paquete) => {
+    if (desde && (!paquete.salida || paquete.salida < desde)) return false;
+    if (hasta && (!paquete.salida || paquete.salida > hasta)) return false;
     return true;
   });
   return (
     <div className="space-y-5">
-      <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 ${glass}`}>
+      <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 ${cristal}`}>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <CalendarDays className="h-4 w-4 text-blue-500" />
           <span className="font-medium">{t("pkg.salida")}:</span>
@@ -462,37 +392,37 @@ function Paquetes({ paquetes, action }) {
             </Button>
           )}
         </div>
-        {action}
+        {accion}
       </div>
 
       {lista.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">—</p>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {lista.map((p, i) => {
-        const Icon = ICONS[p.iconKey] || Palmtree;
-        return (
-          <motion.div key={p.n} variants={fade} custom={i} initial="hidden" animate="show">
-            <SpotlightCard className={`overflow-hidden rounded-2xl ${glass} transition-transform hover:-translate-y-1`} spotlightColor="rgba(37,99,235,0.12)">
+          {lista.map((paquete, indice) => {
+            const Icono = ICONOS[paquete.icono] || Palmtree;
+            return (
+          <motion.div key={paquete.nombre} variants={aparecer} custom={indice} initial="hidden" animate="show">
+            <TarjetaIluminada className={`overflow-hidden rounded-2xl ${cristal} transition-transform hover:-translate-y-1`} spotlightColor="rgba(37,99,235,0.12)">
               <div className="grid h-28 place-items-center bg-gradient-to-br from-sky-500 to-blue-600">
-                <Icon className="h-12 w-12 text-white" strokeWidth={1.5} />
+                <Icono className="h-12 w-12 text-white" strokeWidth={1.5} />
               </div>
               <div className="p-4">
-                <b className="text-[15px] text-foreground">{p.n}</b>
-                <div className="mb-3 mt-0.5 text-xs text-muted-foreground">{p.loc}</div>
-                <div className="text-lg font-bold text-blue-600">{p.precio}</div>
-                <div className="mt-1.5 text-[11.5px] text-muted-foreground">{p.cupo}</div>
-                {(p.salida || p.regreso) && (
+                <b className="text-[15px] text-foreground">{paquete.nombre}</b>
+                <div className="mb-3 mt-0.5 text-xs text-muted-foreground">{paquete.ubicacion}</div>
+                <div className="text-lg font-bold text-blue-600">{paquete.precio}</div>
+                <div className="mt-1.5 text-[11.5px] text-muted-foreground">{paquete.cupo}</div>
+                {(paquete.salida || paquete.regreso) && (
                   <div className="mt-2 flex items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground">
                     <CalendarDays className="h-3.5 w-3.5 text-blue-500" />
-                    <span>{t("pkg.salida")}: <b className="font-medium text-foreground">{p.salida || "—"}</b></span>
-                    <span>· {t("pkg.regreso")}: <b className="font-medium text-foreground">{p.regreso || "—"}</b></span>
+                    <span>{t("pkg.salida")}: <b className="font-medium text-foreground">{paquete.salida || "—"}</b></span>
+                    <span>· {t("pkg.regreso")}: <b className="font-medium text-foreground">{paquete.regreso || "—"}</b></span>
                   </div>
                 )}
               </div>
-            </SpotlightCard>
+            </TarjetaIluminada>
           </motion.div>
-        );
+            );
           })}
         </div>
       )}
@@ -500,55 +430,58 @@ function Paquetes({ paquetes, action }) {
   );
 }
 
-function Reportes() {
-  const asesores = [
-    ["Samuel Parra", "142 reservas", "$ 812 M"],
-    ["Juan J. García", "118 reservas", "$ 690 M"],
-    ["Andrés Martínez", "109 reservas", "$ 634 M"],
-  ];
-  const distrib = [[Plane, "Internacionales", 58], [Bus, "Nacionales", 31], [Ship, "Cruceros", 11]];
+function VistaReportes({ datos }) {
+  const { reservas, pagos, paquetes } = datos;
+  const ventas = pagos.reduce((suma, pago) => suma + leerDinero(pago[4]), 0);
+  const asesores = Object.entries(reservas.reduce((agrupados, reserva) => {
+    const asesor = reserva[5] || "Sin asignar";
+    agrupados[asesor] = (agrupados[asesor] || 0) + 1;
+    return agrupados;
+  }, {})).sort((primero, segundo) => segundo[1] - primero[1]);
+  const nacionales = reservas.filter((reserva) => paquetes.find((paquete) => paquete.nombre === reserva[2])?.ubicacion?.includes("Colombia")).length;
+  const totalViajes = reservas.length || 1;
+  const distribucion = [[Plane, "Internacionales", Math.round((reservas.length - nacionales) / totalViajes * 100)], [Bus, "Nacionales", Math.round(nacionales / totalViajes * 100)], [Ship, "Cruceros", 0]];
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          { lbl: "Ventas acumuladas 2026", to: 2940, prefix: "$ ", suffix: " M", delta: "+21% anual" },
-          { lbl: "Ticket promedio", to: 5.8, prefix: "$ ", suffix: " M", delta: "+4%", decimals: 1 },
-          { lbl: "Tasa de conversión", to: 62, suffix: "%", delta: "+5 pts" },
+          { lbl: "Pagos registrados", to: ventas / 1000000, prefix: "$ ", suffix: " M", decimals: 1 },
+          { lbl: "Pago promedio", to: pagos.length ? ventas / pagos.length / 1000000 : 0, prefix: "$ ", suffix: " M", decimals: 1 },
+          { lbl: "Reservas registradas", to: reservas.length },
         ].map((k, i) => (
-          <motion.div key={k.lbl} variants={fade} custom={i} initial="hidden" animate="show">
-            <SpotlightCard className={`rounded-2xl p-5 ${glass}`} spotlightColor="rgba(37,99,235,0.12)">
+          <motion.div key={k.lbl} variants={aparecer} custom={i} initial="hidden" animate="show">
+            <TarjetaIluminada className={`rounded-2xl p-5 ${cristal}`} spotlightColor="rgba(37,99,235,0.12)">
               <p className="mb-2 text-[13px] text-muted-foreground">{k.lbl}</p>
               <p className="text-[27px] font-bold text-foreground">
-                <CountUp to={k.to} prefix={k.prefix || ""} suffix={k.suffix || ""} decimals={k.decimals || 0} duration={1.6} />
+                <ContadorAnimado to={k.to} prefix={k.prefix || ""} suffix={k.suffix || ""} decimals={k.decimals || 0} duration={1.6} />
               </p>
-              <p className="mt-1.5 flex items-center gap-1 text-xs text-emerald-600"><TrendingUp className="h-3.5 w-3.5" />{k.delta}</p>
-            </SpotlightCard>
+            </TarjetaIluminada>
           </motion.div>
         ))}
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
-        <Panel title="Ventas por asesor" tag="trimestre">
+        <Panel titulo="Reservas por asesor" etiqueta="total">
           <div className="divide-y divide-border">
-            {asesores.map((r, i) => (
-              <div key={r[0]} className="flex items-center gap-3 py-2.5">
-                <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-sm font-bold text-blue-700 dark:text-sky-300">{i + 1}</div>
-                <div className="flex-1"><b className="text-sm text-foreground">{r[0]}</b><small className="block text-[11.5px] text-muted-foreground">{r[1]}</small></div>
-                <span className="text-sm font-semibold text-blue-600">{r[2]}</span>
+            {asesores.map(([asesor, cantidad], indice) => (
+              <div key={asesor} className="flex items-center gap-3 py-2.5">
+                <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-sm font-bold text-blue-700 dark:text-sky-300">{indice + 1}</div>
+                <div className="flex-1"><b className="text-sm text-foreground">{asesor}</b></div>
+                <span className="text-sm font-semibold text-blue-600">{cantidad} reservas</span>
               </div>
             ))}
           </div>
         </Panel>
-        <Panel title="Distribución de ventas" tag="por tipo">
+        <Panel titulo="Distribución de reservas" etiqueta="por tipo">
           <div className="space-y-4">
-            {distrib.map(([Icon, label, val]) => (
-              <div key={label}>
+            {distribucion.map(([Icono, etiqueta, porcentaje]) => (
+              <div key={etiqueta}>
                 <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-foreground"><Icon className="h-4 w-4 text-blue-600" />{label}</span>
-                  <span className="font-semibold text-blue-600">{val}%</span>
+                  <span className="flex items-center gap-2 text-foreground"><Icono className="h-4 w-4 text-blue-600" />{etiqueta}</span>
+                  <span className="font-semibold text-blue-600">{porcentaje}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                   <motion.div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-600"
-                    initial={{ width: 0 }} animate={{ width: `${val}%` }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} />
+                    initial={{ width: 0 }} animate={{ width: `${porcentaje}%` }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} />
                 </div>
               </div>
             ))}
@@ -563,109 +496,109 @@ function Reportes() {
 const hoy = () => new Date().toISOString().slice(0, 10);
 const n4 = () => Math.floor(1000 + Math.random() * 9000);
 const n6 = () => Math.floor(100000 + Math.random() * 900000);
-const parseMoney = (s) => Number(String(s ?? "").replace(/[^\d]/g, "")) || 0;
-const fmtMoney = (n) => "$ " + Math.round(n).toLocaleString("es-CO");
+const leerDinero = (valor) => Number(String(valor ?? "").replace(/[^\d]/g, "")) || 0;
+const mostrarDinero = (valor) => "$ " + Math.round(valor).toLocaleString("es-CO");
 
-// Cada config: qué tabla, qué campos, y cómo construir el registro para BD y para la tabla.
-const FORMS = {
+// Cada formulario indica la tabla, los campos y cómo construir el registro.
+const FORMULARIOS = {
   clientes: {
-    entity: "clientes", table: "clientes", label: "Nuevo cliente", title: "Registrar nuevo cliente",
-    fields: [
+    entidad: "clientes", tabla: "clientes", etiqueta: "Nuevo cliente", titulo: "Registrar nuevo cliente",
+    campos: [
       { key: "nombre", label: "Nombre completo", ph: "Ej. Juan García" },
       { key: "documento", label: "Documento", ph: "Cédula", half: true },
       { key: "telefono", label: "Teléfono", ph: "300 000 0000", half: true },
       { key: "correo", label: "Correo", ph: "correo@mail.com", type: "email" },
     ],
-    build: (v) => {
+    construir: (valores) => {
       const codigo = "CL-" + n4();
       return {
-        payload: { codigo, nombre: v.nombre, documento: v.documento, correo: v.correo, telefono: v.telefono, reservas: 0, activo: true, observaciones: "", obs_desde: null, obs_hasta: null },
-        row: [codigo, v.nombre, v.documento, v.correo, v.telefono, 0, true, "", "", ""],
+        datos: { codigo, nombre: valores.nombre, documento: valores.documento, correo: valores.correo, telefono: valores.telefono, reservas: 0, activo: true, observaciones: "", obs_desde: null, obs_hasta: null },
+        fila: [codigo, valores.nombre, valores.documento, valores.correo, valores.telefono, 0, true, "", "", ""],
       };
     },
   },
   empleados: {
-    entity: "empleados", table: "empleados", label: "Nuevo empleado", title: "Registrar nuevo empleado",
-    fields: [
+    entidad: "empleados", tabla: "empleados", etiqueta: "Nuevo empleado", titulo: "Registrar nuevo empleado",
+    campos: [
       { key: "nombre", label: "Nombre", ph: "Ej. Ana López" },
       { key: "cargo", label: "Cargo", select: ["Asesor comercial", "Gerente general", "Contador", "Soporte al cliente", "Coordinador de viajes", "Recursos humanos"], half: true },
       { key: "telefono", label: "Teléfono", ph: "300 000 0000", half: true },
       { key: "correo", label: "Correo", ph: "correo@novatravel.com", type: "email" },
     ],
-    build: (v) => {
+    construir: (valores) => {
       const codigo = "EM-" + n4();
       return {
-        payload: { codigo, nombre: v.nombre, cargo: v.cargo, correo: v.correo, telefono: v.telefono, activo: true, observaciones: "", obs_desde: null, obs_hasta: null },
-        row: [codigo, v.nombre, v.cargo, v.correo, v.telefono, true, "", "", ""],
+        datos: { codigo, nombre: valores.nombre, cargo: valores.cargo, correo: valores.correo, telefono: valores.telefono, activo: true, observaciones: "", obs_desde: null, obs_hasta: null },
+        fila: [codigo, valores.nombre, valores.cargo, valores.correo, valores.telefono, true, "", "", ""],
       };
     },
   },
   reservas: {
-    entity: "reservas", table: "reservas", label: "Nueva reserva", title: "Registrar nueva reserva",
-    fields: [
+    entidad: "reservas", tabla: "reservas", etiqueta: "Nueva reserva", titulo: "Registrar nueva reserva",
+    campos: [
       { key: "cliente", label: "Cliente", select: "clientes" },
       { key: "paquete", label: "Paquete", select: "paquetes" },
       { key: "pax", label: "Pasajeros", ph: "2", type: "number", half: true },
       { key: "fecha_viaje", label: "Fecha de viaje", type: "date", half: true },
       { key: "asesor", label: "Asesor", select: ["Samuel P.", "Juan J.", "Andrés M."] },
     ],
-    build: (v) => {
+    construir: (valores) => {
       const codigo = "#RS-" + n4();
-      const pax = Number(v.pax) || 1;
+      const pax = Number(valores.pax) || 1;
       return {
-        payload: { codigo, cliente: v.cliente, paquete: v.paquete, pax, fecha_viaje: v.fecha_viaje || null, asesor: v.asesor, tono: "info", estado: "En proceso" },
-        row: [codigo, v.cliente, v.paquete, pax, v.fecha_viaje || "—", v.asesor, "info", "En proceso"],
+        datos: { codigo, cliente: valores.cliente, paquete: valores.paquete, pax, fecha_viaje: valores.fecha_viaje || null, asesor: valores.asesor, tono: "info", estado: "En proceso" },
+        fila: [codigo, valores.cliente, valores.paquete, pax, valores.fecha_viaje || "—", valores.asesor, "info", "En proceso"],
       };
     },
   },
   pagos: {
-    entity: "pagos", table: "pagos", label: "Registrar pago", title: "Registrar nuevo pago",
-    fields: [
+    entidad: "pagos", tabla: "pagos", etiqueta: "Registrar pago", titulo: "Registrar nuevo pago",
+    campos: [
       { key: "reserva", label: "Reserva", select: "reservas", half: true },
       { key: "cliente", label: "Cliente", select: "clientes", half: true },
       { key: "metodo", label: "Método", select: ["Tarjeta crédito", "Transferencia", "PSE", "Efectivo", "Nequi"], half: true },
       { key: "valor", label: "Valor", ph: "$ 1.000.000", half: true },
     ],
-    build: (v) => {
+    construir: (valores) => {
       const recibo = "#PG-" + n4();
       return {
-        payload: { recibo, reserva: v.reserva, cliente: v.cliente, metodo: v.metodo, valor: v.valor, fecha: hoy(), tono: "warn", estado: "Abono" },
-        row: [recibo, v.reserva, v.cliente, v.metodo, v.valor, hoy(), "warn", "Abono"],
+        datos: { recibo, reserva: valores.reserva, cliente: valores.cliente, metodo: valores.metodo, valor: valores.valor, fecha: hoy(), tono: "warn", estado: "Abono" },
+        fila: [recibo, valores.reserva, valores.cliente, valores.metodo, valores.valor, hoy(), "warn", "Abono"],
       };
     },
   },
   facturas: {
-    entity: "facturas", table: "facturas", label: "Emitir factura", title: "Emitir nueva factura",
-    fields: [
+    entidad: "facturas", tabla: "facturas", etiqueta: "Emitir factura", titulo: "Emitir nueva factura",
+    campos: [
       { key: "cliente", label: "Cliente", select: "clientes" },
       { key: "nit", label: "NIT / CC", ph: "900.000.000-0", half: true },
       { key: "reserva", label: "Reserva", select: "reservas", half: true },
       { key: "valor", label: "Valor + IVA", ph: "$ 6.480.000" },
     ],
-    build: (v) => {
+    construir: (valores) => {
       const factura = "FE-" + n6();
       return {
-        payload: { factura, cliente: v.cliente, nit: v.nit, reserva: v.reserva, valor: v.valor, fecha: hoy(), tono: "info", estado: "Enviada" },
-        row: [factura, v.cliente, v.nit, v.reserva, v.valor, hoy(), "info", "Enviada"],
+        datos: { factura, cliente: valores.cliente, nit: valores.nit, reserva: valores.reserva, valor: valores.valor, fecha: hoy(), tono: "info", estado: "Enviada" },
+        fila: [factura, valores.cliente, valores.nit, valores.reserva, valores.valor, hoy(), "info", "Enviada"],
       };
     },
   },
   proveedores: {
-    entity: "proveedores", table: "proveedores", label: "Nuevo proveedor", title: "Registrar nuevo proveedor",
-    fields: [
+    entidad: "proveedores", tabla: "proveedores", etiqueta: "Nuevo proveedor", titulo: "Registrar nuevo proveedor",
+    campos: [
       { key: "nombre", label: "Proveedor", ph: "Ej. Avianca" },
       { key: "tipo", label: "Tipo", select: ["Aerolínea", "Hotelería", "Operador terrestre", "Naviera"], half: true },
       { key: "convenio", label: "Convenio", ph: "Comisión 8%", half: true },
       { key: "contacto", label: "Contacto", ph: "correo@proveedor.com" },
     ],
-    build: (v) => ({
-      payload: { nombre: v.nombre, tipo: v.tipo, contacto: v.contacto, convenio: v.convenio, tono: "info", estado: "Nuevo" },
-      row: [v.nombre, v.tipo, v.contacto, v.convenio, "info", "Nuevo"],
+    construir: (valores) => ({
+      datos: { nombre: valores.nombre, tipo: valores.tipo, contacto: valores.contacto, convenio: valores.convenio, tono: "info", estado: "Nuevo" },
+      fila: [valores.nombre, valores.tipo, valores.contacto, valores.convenio, "info", "Nuevo"],
     }),
   },
   paquetes: {
-    entity: "paquetes", table: "paquetes", label: "Nuevo paquete", title: "Registrar nuevo paquete",
-    fields: [
+    entidad: "paquetes", tabla: "paquetes", etiqueta: "Nuevo paquete", titulo: "Registrar nuevo paquete",
+    campos: [
       { key: "nombre", label: "Nombre del paquete", ph: "Ej. Cancún Paraíso" },
       { key: "loc", label: "Ubicación / duración", ph: "México · 7 días / 6 noches" },
       { key: "precio", label: "Precio", ph: "$ 6.480.000", half: true },
@@ -674,80 +607,78 @@ const FORMS = {
       { key: "regreso", label: "Fecha de regreso", type: "date", half: true },
       { key: "icono", label: "Ícono", select: ["umbrella", "landmark", "waves", "ferriswheel", "mountain", "building"] },
     ],
-    build: (v) => {
-      const icono = v.icono || "umbrella";
+    construir: (valores) => {
+      const icono = valores.icono || "umbrella";
       return {
-        payload: { nombre: v.nombre, loc: v.loc, precio: v.precio, cupo: v.cupo, icono, salida: v.salida || null, regreso: v.regreso || null },
-        row: { iconKey: icono, n: v.nombre, loc: v.loc, precio: v.precio, cupo: v.cupo, salida: v.salida || "", regreso: v.regreso || "" },
+        datos: { nombre: valores.nombre, loc: valores.loc, precio: valores.precio, cupo: valores.cupo, icono, salida: valores.salida || null, regreso: valores.regreso || null },
+        fila: { icono, nombre: valores.nombre, ubicacion: valores.loc, precio: valores.precio, cupo: valores.cupo, salida: valores.salida || "", regreso: valores.regreso || "" },
       };
     },
   },
 };
 
-function AddDialog({ label, title, fields, onSubmit, selects = {} }) {
-  const empty = Object.fromEntries(fields.map((f) => [f.key, ""]));
-  const [open, setOpen] = useState(false);
-  const [v, setV] = useState(empty);
-  const [saving, setSaving] = useState(false);
+function DialogoAgregar({ label: etiqueta, title: titulo, fields: campos, onSubmit: alEnviar, selects: opciones = {} }) {
+  const vacio = Object.fromEntries(campos.map((campo) => [campo.key, ""]));
+  const [abierto, setAbierto] = useState(false);
+  const [valores, setValores] = useState(vacio);
+  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
-  const set = (k) => (e) => setV((s) => ({ ...s, [k]: e.target.value }));
-  const setVal = (k, val) => setV((s) => ({ ...s, [k]: val }));
-  const optsOf = (f) => (Array.isArray(f.select) ? f.select : selects[f.select] || []);
+  const cambiarCampo = (clave) => (evento) => setValores((anteriores) => ({ ...anteriores, [clave]: evento.target.value }));
+  const elegirCampo = (clave, valor) => setValores((anteriores) => ({ ...anteriores, [clave]: valor }));
+  const opcionesDe = (campo) => (Array.isArray(campo.select) ? campo.select : opciones[campo.select] || []);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    const first = fields[0];
-    if (first && !String(v[first.key] || "").trim()) { setError(`${first.label} es obligatorio.`); return; }
-    const pasada = fields.find((f) => f.type === "date" && v[f.key] && v[f.key] < hoy());
+  const enviar = async (evento) => {
+    evento.preventDefault();
+    const primero = campos[0];
+    if (primero && !String(valores[primero.key] || "").trim()) { setError(`${primero.label} es obligatorio.`); return; }
+    const pasada = campos.find((campo) => campo.type === "date" && valores[campo.key] && valores[campo.key] < hoy());
     if (pasada) { setError("La fecha no puede ser anterior a hoy."); return; }
-    setSaving(true); setError("");
+    setGuardando(true); setError("");
     try {
-      await onSubmit(v);
-      setV(empty); setOpen(false);
-    } catch (err) {
-      setError("No se pudo guardar: " + err.message);
+      await alEnviar(valores);
+      setValores(vacio); setAbierto(false);
+    } catch (fallo) {
+      setError("No se pudo guardar: " + fallo.message);
     } finally {
-      setSaving(false);
+      setGuardando(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1 bg-gradient-to-br from-sky-500 to-blue-600 text-white">
-          <Plus className="h-3.5 w-3.5" />{label}
-        </Button>
+    <Dialog open={abierto} onOpenChange={setAbierto}>
+      <DialogTrigger render={<Button size="sm" className="h-8 gap-1 bg-gradient-to-br from-sky-500 to-blue-600 text-white" />}>
+          <Plus className="h-3.5 w-3.5" />{etiqueta}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <form onSubmit={submit} className="space-y-3">
+        <DialogHeader><DialogTitle>{titulo}</DialogTitle></DialogHeader>
+        <form onSubmit={enviar} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            {fields.map((f) => (
-              <div key={f.key} className={`space-y-1.5 ${f.half ? "" : "col-span-2"}`}>
-                <Label htmlFor={f.key}>{f.label}</Label>
-                {f.select ? (
-                  <Select value={v[f.key]} onValueChange={(val) => setVal(f.key, val)}>
-                    <SelectTrigger id={f.key} className="w-full">
-                      <SelectValue placeholder={`Selecciona ${f.label.toLowerCase()}`} />
+            {campos.map((campo) => (
+              <div key={campo.key} className={`space-y-1.5 ${campo.half ? "" : "col-span-2"}`}>
+                <Label htmlFor={campo.key}>{campo.label}</Label>
+                {campo.select ? (
+                  <Select value={valores[campo.key]} onValueChange={(valor) => elegirCampo(campo.key, valor)}>
+                    <SelectTrigger id={campo.key} className="w-full">
+                      <SelectValue placeholder={`Selecciona ${campo.label.toLowerCase()}`} />
                     </SelectTrigger>
                     <SelectContent className="max-h-64">
-                      {optsOf(f).length === 0
+                      {opcionesDe(campo).length === 0
                         ? <div className="px-2 py-1.5 text-sm text-slate-400">Sin opciones</div>
-                        : optsOf(f).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                        : opcionesDe(campo).map((opcion) => <SelectItem key={opcion} value={opcion}>{opcion}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Input id={f.key} type={f.type || "text"} value={v[f.key]} onChange={set(f.key)}
-                    placeholder={f.ph || ""} min={f.type === "date" ? hoy() : undefined} />
+                  <Input id={campo.key} type={campo.type || "text"} value={valores[campo.key]} onChange={cambiarCampo(campo.key)}
+                    placeholder={campo.ph || ""} min={campo.type === "date" ? hoy() : undefined} />
                 )}
               </div>
             ))}
           </div>
           {error && <p className="text-sm text-rose-500">{error}</p>}
           <DialogFooter className="gap-2 sm:gap-2">
-            <DialogClose asChild><Button type="button" variant="outline">Cancelar</Button></DialogClose>
-            <Button type="submit" disabled={saving} className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">
-              {saving ? "Guardando..." : "Guardar"}
+            <DialogClose disabled={guardando} render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>
+            <Button type="submit" disabled={guardando} className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">
+              {guardando ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>
         </form>
@@ -757,40 +688,40 @@ function AddDialog({ label, title, fields, onSubmit, selects = {} }) {
 }
 
 /* ------------------------------- Estado BD ------------------------------- */
-function DbBadge({ source }) {
-  const { t } = useLang();
-  if (source === "supabase")
+function EstadoConexion({ origen }) {
+  const { t } = useIdioma();
+  if (origen === "supabase")
     return <div className="hidden items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 lg:flex"><Database className="h-3.5 w-3.5" />{t("tb.db")}</div>;
-  return <div className="hidden items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 lg:flex"><CircleAlert className="h-3.5 w-3.5" />{t("tb.demo")}</div>;
+  return <div role="status" className="hidden items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 lg:flex"><CircleAlert className="h-3.5 w-3.5" />{t(origen === "demo" ? "tb.demo" : origen === "loading" ? "acceso.validando" : "acceso.bloqueado")}</div>;
 }
 
 /* --------------------------- Tema (claro/oscuro) --------------------------- */
-function useTheme() {
-  const [dark, setDark] = useState(() => {
+function useTema() {
+  const [oscuro, cambiarOscuro] = useState(() => {
     try { return localStorage.getItem("nt_theme") === "dark"; } catch { return false; }
   });
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    try { localStorage.setItem("nt_theme", dark ? "dark" : "light"); } catch { /* noop */ }
-  }, [dark]);
-  return [dark, setDark];
+    document.documentElement.classList.toggle("dark", oscuro);
+    try { localStorage.setItem("nt_theme", oscuro ? "dark" : "light"); } catch { /* noop */ }
+  }, [oscuro]);
+  return [oscuro, cambiarOscuro];
 }
 
-function TopControls({ dark, setDark }) {
-  const { t, lang, setLang } = useLang();
+function ControlesSuperiores({ oscuro, cambiarOscuro }) {
+  const { t, idioma, cambiarIdioma } = useIdioma();
   return (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="icon" title={dark ? t("theme.light") : t("theme.dark")}
-        onClick={() => setDark((d) => !d)} className="border-border">
-        {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      <Button variant="outline" size="icon" aria-label={oscuro ? t("theme.light") : t("theme.dark")} title={oscuro ? t("theme.light") : t("theme.dark")}
+        onClick={() => cambiarOscuro((anterior) => !anterior)} className="border-border">
+        {oscuro ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
-      <Select value={lang} onValueChange={setLang}>
+      <Select value={idioma} onValueChange={cambiarIdioma}>
         <SelectTrigger className="h-9 w-[140px] gap-1 border-border" title={t("lang.label")} aria-label={t("lang.label")}>
           <Languages className="h-4 w-4 shrink-0 text-blue-600" />
-          <span className="truncate">{LANGS.find((l) => l.code === lang)?.label || lang}</span>
+          <span className="truncate">{IDIOMAS.find((opcion) => opcion.code === idioma)?.label || idioma}</span>
         </SelectTrigger>
         <SelectContent>
-          {LANGS.map((l) => <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>)}
+          {IDIOMAS.map((opcion) => <SelectItem key={opcion.code} value={opcion.code}>{opcion.label}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
@@ -798,36 +729,44 @@ function TopControls({ dark, setDark }) {
 }
 
 /* ------------------------ Observaciones de un registro ---------------------- */
-function ObsDialog({ current, onSave }) {
-  const { t } = useLang();
-  const [open, setOpen] = useState(false);
-  const [obs, setObs] = useState(current.obs);
-  const [desde, setDesde] = useState(current.desde);
-  const [hasta, setHasta] = useState(current.hasta);
-  useEffect(() => { if (open) { setObs(current.obs); setDesde(current.desde); setHasta(current.hasta); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  const save = async (e) => { e.preventDefault(); await onSave({ obs, desde, hasta }); setOpen(false); };
+function DialogoObservacion({ actual, alGuardar }) {
+  const { t } = useIdioma();
+  const [abierto, cambiarAbierto] = useState(false);
+  const [observacion, cambiarObservacion] = useState(actual.obs);
+  const [desde, cambiarDesde] = useState(actual.desde);
+  const [hasta, cambiarHasta] = useState(actual.hasta);
+  const [guardando, cambiarGuardando] = useState(false);
+  const [error, cambiarError] = useState("");
+  useEffect(() => { if (abierto) { cambiarObservacion(actual.obs); cambiarDesde(actual.desde); cambiarHasta(actual.hasta); } }, [abierto]); // eslint-disable-line react-hooks/exhaustive-deps
+  const guardar = async (evento) => {
+    evento.preventDefault();
+    if (guardando) return;
+    cambiarGuardando(true); cambiarError("");
+    try { await alGuardar({ obs: observacion, desde, hasta }); cambiarAbierto(false); }
+    catch (fallo) { cambiarError(fallo.message); }
+    finally { cambiarGuardando(false); }
+  };
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 dark:border-sky-500/30 text-blue-700 dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-blue-400/15">
+    <Dialog open={abierto} onOpenChange={(valor) => { if (!guardando) cambiarAbierto(valor); }}>
+      <DialogTrigger render={<Button size="sm" variant="outline" className="h-7 gap-1 border-blue-200 dark:border-sky-500/30 text-blue-700 dark:text-sky-300 hover:bg-blue-50 dark:hover:bg-blue-400/15" />}>
           <MessageSquarePlus className="h-3.5 w-3.5" />{t("btn.observ")}
-        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>{t("obs.title")}</DialogTitle></DialogHeader>
-        <form onSubmit={save} className="space-y-3">
+        <form onSubmit={guardar} className="space-y-3">
           <div className="space-y-1.5">
             <Label>{t("obs.text")}</Label>
-            <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3}
+            <textarea value={observacion} onChange={(evento) => cambiarObservacion(evento.target.value)} rows={3}
               className="w-full rounded-md border border-border bg-background p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30" />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>{t("obs.from")}</Label><Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label>{t("obs.to")}</Label><Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>{t("obs.from")}</Label><Input type="date" value={desde} onChange={(evento) => cambiarDesde(evento.target.value)} /></div>
+            <div className="space-y-1.5"><Label>{t("obs.to")}</Label><Input type="date" value={hasta} onChange={(evento) => cambiarHasta(evento.target.value)} /></div>
           </div>
+          {error && <p role="alert" className="text-sm text-rose-600">{error}</p>}
           <DialogFooter className="gap-2 sm:gap-2">
-            <DialogClose asChild><Button type="button" variant="outline">{t("btn.cancel")}</Button></DialogClose>
-            <Button type="submit" className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">{t("btn.save")}</Button>
+            <DialogClose disabled={guardando} render={<Button type="button" variant="outline" />}>{t("btn.cancel")}</DialogClose>
+            <Button type="submit" disabled={guardando} className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">{t(guardando ? "acceso.esperar" : "btn.save")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -836,32 +775,43 @@ function ObsDialog({ current, onSave }) {
 }
 
 /* ----------- Vista de personas (Clientes / Empleados) con activo + obs ---------- */
-function PeopleView({ title, action, rows, leadCols, actIdx, obsIdx, desIdx, hasIdx, onToggle, onObs }) {
-  const { t } = useLang();
+function VistaPersonas({ titulo, accion, filas, columnas, indiceActivo, indiceObservacion, indiceDesde, indiceHasta, alCambiarActivo, alObservar, mostrarAcceso }) {
+  const { t } = useIdioma();
+  const [ocupado, cambiarOcupado] = useState(false);
+  const [error, cambiarError] = useState("");
+  const cambiarEstado = async (codigo, activo) => {
+    if (ocupado) return;
+    cambiarOcupado(true); cambiarError("");
+    try { await alCambiarActivo(codigo, activo); }
+    catch (fallo) { cambiarError(fallo.message); }
+    finally { cambiarOcupado(false); }
+  };
   return (
-    <Panel title={title} tag={action}>
+    <Panel titulo={titulo} etiqueta={accion}>
+      {error && <p role="alert" className="mb-3 text-sm text-rose-600">{error}</p>}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
-              {leadCols.map((c) => <Th key={c.label}>{c.label}</Th>)}
-              <Th>{t("col.estado")}</Th><Th>{t("col.observ")}</Th><Th>{t("col.accion")}</Th>
+              {columnas.map((columna) => <CabeceraTabla key={columna.label}>{columna.label}</CabeceraTabla>)}
+              <CabeceraTabla>{t(mostrarAcceso ? "acceso.estadoEmpleado" : "col.estado")}</CabeceraTabla>{mostrarAcceso && <CabeceraTabla>{t("acceso.acceso")}</CabeceraTabla>}<CabeceraTabla>{t("col.observ")}</CabeceraTabla><CabeceraTabla>{t("col.accion")}</CabeceraTabla>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((r) => {
-              const activo = r[actIdx];
+            {filas.map((fila) => {
+              const activo = fila[indiceActivo];
               return (
-                <TableRow key={r[0]} className={`border-border hover:bg-sky-50 dark:hover:bg-sky-400/10 ${activo ? "" : "opacity-55"}`}>
-                  {leadCols.map((c, i) => <TableCell key={i} className={i === 0 ? "font-medium text-foreground" : ""}>{r[c.idx]}</TableCell>)}
-                  <TableCell><Pill tone={activo ? "ok" : "bad"}>{activo ? t("st.active") : t("st.inactive")}</Pill></TableCell>
+                <TableRow key={fila[0]} className={`border-border hover:bg-sky-50 dark:hover:bg-sky-400/10 ${activo ? "" : "opacity-55"}`}>
+                  {columnas.map((columna, indice) => <TableCell key={indice} className={indice === 0 ? "font-medium text-foreground" : ""}>{fila[columna.idx]}</TableCell>)}
+                   <TableCell><EtiquetaEstado tono={activo ? "ok" : "bad"}>{activo ? t("st.active") : t("st.inactive")}</EtiquetaEstado></TableCell>
+                   {mostrarAcceso && <TableCell>{mostrarAcceso(fila)}</TableCell>}
                   <TableCell className="max-w-[280px] align-top">
-                    {r[obsIdx] ? (
+                    {fila[indiceObservacion] ? (
                       <div className="flex flex-col items-start gap-1 py-0.5">
-                        <span className="text-xs leading-snug text-muted-foreground">{r[obsIdx]}</span>
-                        {(r[desIdx] || r[hasIdx]) && (
+                        <span className="text-xs leading-snug text-muted-foreground">{fila[indiceObservacion]}</span>
+                        {(fila[indiceDesde] || fila[indiceHasta]) && (
                           <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
-                            <CalendarDays className="h-3 w-3" />{r[desIdx] || "—"} → {r[hasIdx] || "—"}
+                            <CalendarDays className="h-3 w-3" />{fila[indiceDesde] || "—"} → {fila[indiceHasta] || "—"}
                           </span>
                         )}
                       </div>
@@ -871,8 +821,8 @@ function PeopleView({ title, action, rows, leadCols, actIdx, obsIdx, desIdx, has
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
-                      <ObsDialog current={{ obs: r[obsIdx] || "", desde: r[desIdx] || "", hasta: r[hasIdx] || "" }} onSave={(o) => onObs(r[0], o)} />
-                      <Button size="sm" variant="outline" onClick={() => onToggle(r[0], !activo)}
+                       <DialogoObservacion actual={{ obs: fila[indiceObservacion] || "", desde: fila[indiceDesde] || "", hasta: fila[indiceHasta] || "" }} alGuardar={(observacion) => alObservar(fila[0], observacion)} />
+                        <Button size="sm" variant="outline" disabled={ocupado} onClick={() => cambiarEstado(fila[0], !activo)}
                         className={`h-7 gap-1 ${activo ? "border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-400/15" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-400/15"}`}>
                         <Power className="h-3.5 w-3.5" />{activo ? t("btn.deactivate") : t("btn.activate")}
                       </Button>
@@ -881,6 +831,7 @@ function PeopleView({ title, action, rows, leadCols, actIdx, obsIdx, desIdx, has
                 </TableRow>
               );
             })}
+            {filas.length === 0 && <TableRow><TableCell colSpan={columnas.length + (mostrarAcceso ? 4 : 3)} className="py-6 text-center text-muted-foreground">{t("acceso.sinRegistros")}</TableCell></TableRow>}
           </TableBody>
         </Table>
       </div>
@@ -889,7 +840,7 @@ function PeopleView({ title, action, rows, leadCols, actIdx, obsIdx, desIdx, has
 }
 
 /* -------------------------- Políticas y cookies -------------------------- */
-const POLICY = {
+const POLITICAS = {
   privacy: [
     "En NóvaTravel tratamos tus datos personales conforme a la Ley 1581 de 2012 (Colombia) y su Decreto reglamentario 1377 de 2013.",
     "Recopilamos únicamente los datos necesarios para gestionar reservas, pagos y facturación: nombre, documento, contacto y detalles del viaje.",
@@ -904,26 +855,24 @@ const POLICY = {
     "(Texto de ejemplo — reemplazar por la política de cookies definitiva de la empresa.)",
   ],
 };
-function PolicyDialog({ icon: Icon, title, paragraphs }) {
+function DialogoPolitica({ icono: Icono, titulo, parrafos }) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <button type="button" className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-blue-600">
-          <Icon className="h-3.5 w-3.5" />{title}
-        </button>
+      <DialogTrigger render={<button type="button" className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-blue-600" />}>
+          <Icono className="h-3.5 w-3.5" />{titulo}
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{titulo}</DialogTitle></DialogHeader>
         <div className="space-y-3 text-sm text-muted-foreground">
-          {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
+          {parrafos.map((parrafo, indice) => <p key={indice}>{parrafo}</p>)}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function CookieBanner() {
-  const { t } = useLang();
+function AvisoCookies() {
+  const { t } = useIdioma();
   const [show, setShow] = useState(() => { try { return !localStorage.getItem("nt_cookies"); } catch { return true; } });
   if (!show) return null;
   const choose = (v) => { try { localStorage.setItem("nt_cookies", v); } catch { /* noop */ } setShow(false); };
@@ -939,167 +888,172 @@ function CookieBanner() {
   );
 }
 
-function Footer() {
-  const { t } = useLang();
+function PiePagina() {
+  const { t } = useIdioma();
   return (
     <footer className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-border pt-5 text-xs text-muted-foreground">
       <span>© 2026 NóvaTravel</span>
-      <PolicyDialog icon={Shield} title={t("pol.privacy")} paragraphs={POLICY.privacy} />
-      <PolicyDialog icon={Cookie} title={t("pol.cookies")} paragraphs={POLICY.cookies} />
+       <DialogoPolitica icono={Shield} titulo={t("pol.privacy")} parrafos={POLITICAS.privacy} />
+       <DialogoPolitica icono={Cookie} titulo={t("pol.cookies")} parrafos={POLITICAS.cookies} />
     </footer>
   );
 }
 
-/* -------------------------------- useEntities ------------------------------ */
-function useEntities() {
-  const [data, setData] = useState(DEMO);
-  const [source, setSource] = useState(isSupabaseReady ? "loading" : "demo");
+/* ----------------------------- Carga de entidades --------------------------- */
+function useEntidades() {
+  const [datos, setDatos] = useState(() => supabaseConfigurado ? { clientes: [], paquetes: [], reservas: [], pagos: [], facturas: [], proveedores: [], empleados: [] } : DATOS_DEMO);
+  const [origen, setOrigen] = useState(supabaseConfigurado ? "loading" : "demo");
+  const [error, cambiarError] = useState("");
 
   useEffect(() => {
-    if (!isSupabaseReady) return;
-    let alive = true;
-    fetchEntities()
-      .then((d) => { if (alive && d) { setData(d); setSource("supabase"); } })
-      .catch((err) => { console.error("Supabase:", err.message); if (alive) setSource("demo"); });
-    return () => { alive = false; };
+    if (!supabaseConfigurado) return;
+    let vigente = true;
+    obtenerEntidades()
+      .then((resultado) => { if (vigente && resultado) { setDatos(resultado); setOrigen("supabase"); } })
+      .catch(() => { if (vigente) { setOrigen("error"); cambiarError("acceso.errorDatos"); } });
+    return () => { vigente = false; };
   }, []);
 
-  return { data, setData, source };
+  return { datos, setDatos, origen, error };
 }
 
-/* ------------------------------- Dashboard ------------------------------- */
-function Shell({ onLogout, dark, setDark }) {
-  const { t } = useLang();
-  const [view, setView] = useState("dash");
-  const [open, setOpen] = useState(false);
-  const { data, setData, source } = useEntities();
-  const t1 = t("nav." + view);
-  const t2 = t("sub." + view);
+/* ------------------------------- Panel principal ----------------------------- */
+function PanelPrincipal({ alSalir, oscuro, cambiarOscuro, perfil, validarAcceso }) {
+  const { t } = useIdioma();
+  const [vista, cambiarVista] = useState("dash");
+  const [menuAbierto, cambiarMenu] = useState(false);
+  const { datos, setDatos, origen, error: errorDatos } = useEntidades();
+  const tituloVista = t("nav." + vista);
+  const subtituloVista = t("sub." + vista);
 
   // Opciones para los menús desplegables (se arman con lo que ya existe)
-  const selects = {
-    clientes: data.clientes.map((c) => c[1]),
-    paquetes: data.paquetes.map((p) => p.n),
-    reservas: data.reservas.map((r) => r[0]),
+  const opciones = {
+    clientes: datos.clientes.map((cliente) => cliente[1]),
+    paquetes: datos.paquetes.map((paquete) => paquete.nombre),
+    reservas: datos.reservas.map((reserva) => reserva[0]),
   };
 
-  const submitFor = (key) => async (values) => {
-    if (key === "reservas") return addReserva(values);
-    const cfg = FORMS[key];
-    const { payload, row } = cfg.build(values);
-    setData((d) => ({ ...d, [cfg.entity]: [row, ...d[cfg.entity]] }));
-    if (isSupabaseReady) {
-      try { await insertRow(cfg.table, payload); }
-      catch (err) { console.warn("No se persistió en Supabase:", err.message); }
+  const enviarFormulario = (clave) => async (valores) => {
+    if (clave === "reservas") return agregarReserva(valores);
+    const formulario = FORMULARIOS[clave];
+    const { datos: datosNuevos, fila } = formulario.construir(valores);
+    if (supabaseConfigurado) {
+      await validarAcceso();
+      await insertarFila(formulario.tabla, datosNuevos);
     }
+    setDatos((actuales) => ({ ...actuales, [formulario.entidad]: [fila, ...actuales[formulario.entidad]] }));
   };
 
   // Nueva reserva -> arranca "Pendiente" y genera su factura automáticamente
-  const addReserva = async (values) => {
-    const { payload, row } = FORMS.reservas.build(values);
-    const rrow = [...row]; rrow[6] = "bad"; rrow[7] = "Pendiente";
-    const rpay = { ...payload, tono: "bad", estado: "Pendiente" };
-    const precio = data.paquetes.find((p) => p.n === values.paquete)?.precio || "$ 0";
-    const nit = data.clientes.find((c) => c[1] === values.cliente)?.[2] || "";
+  const agregarReserva = async (valores) => {
+    const { datos: datosReservaInicial, fila } = FORMULARIOS.reservas.construir(valores);
+    const filaReserva = [...fila]; filaReserva[6] = "bad"; filaReserva[7] = "Pendiente";
+    const datosReserva = { ...datosReservaInicial, tono: "bad", estado: "Pendiente" };
+    const precio = datos.paquetes.find((paquete) => paquete.nombre === valores.paquete)?.precio || "$ 0";
+    const nit = datos.clientes.find((cliente) => cliente[1] === valores.cliente)?.[2] || "";
     const factura = "FE-" + n6();
-    const frow = [factura, values.cliente, nit, payload.codigo, precio, hoy(), "warn", "Por validar"];
-    const fpay = { factura, cliente: values.cliente, nit, reserva: payload.codigo, valor: precio, fecha: hoy(), tono: "warn", estado: "Por validar" };
-    setData((d) => ({ ...d, reservas: [rrow, ...d.reservas], facturas: [frow, ...d.facturas] }));
-    if (isSupabaseReady) {
-      try { await insertRow("reservas", rpay); await insertRow("facturas", fpay); }
-      catch (err) { console.warn("No se persistió en Supabase:", err.message); }
+    const filaFactura = [factura, valores.cliente, nit, datosReservaInicial.codigo, precio, hoy(), "warn", "Por validar"];
+    const datosFactura = { factura, cliente: valores.cliente, nit, reserva: datosReservaInicial.codigo, valor: precio, fecha: hoy(), tono: "warn", estado: "Por validar" };
+    if (supabaseConfigurado) {
+      await validarAcceso();
+      await insertarFila("reservas", datosReserva);
+      try { await insertarFila("facturas", datosFactura); }
+      catch { throw new Error(t("acceso.reservaParcial")); }
     }
+    setDatos((actuales) => ({ ...actuales, reservas: [filaReserva, ...actuales.reservas], facturas: [filaFactura, ...actuales.facturas] }));
   };
 
   // Total del viaje, abonado y saldo pendiente de una reserva
-  const payInfo = (code) => {
-    const r = data.reservas.find((x) => x[0] === code);
-    const totalStr = data.facturas.find((f) => f[3] === code)?.[4]
-      || data.paquetes.find((p) => p.n === (r ? r[2] : null))?.precio || "0";
-    const total = parseMoney(totalStr);
-    const pagado = data.pagos.filter((pg) => pg[1] === code).reduce((s, pg) => s + parseMoney(pg[4]), 0);
+  const obtenerSaldo = (codigo) => {
+    const reserva = datos.reservas.find((fila) => fila[0] === codigo);
+    const totalTexto = datos.facturas.find((factura) => factura[3] === codigo)?.[4]
+      || datos.paquetes.find((paquete) => paquete.nombre === (reserva ? reserva[2] : null))?.precio || "0";
+    const total = leerDinero(totalTexto);
+    const pagado = datos.pagos.filter((pago) => pago[1] === codigo).reduce((acumulado, pago) => acumulado + leerDinero(pago[4]), 0);
     return { total, pagado, saldo: Math.max(total - pagado, 0) };
   };
 
   // Pagar (abono o pago total). No permite pagar más que el saldo.
-  const payReserva = async (code, amount) => {
-    const r = data.reservas.find((x) => x[0] === code);
-    if (!r) return;
-    const { saldo } = payInfo(code);
-    const monto = Math.min(amount, saldo);
+  const pagarReserva = async (codigo, montoSolicitado) => {
+    const reserva = datos.reservas.find((fila) => fila[0] === codigo);
+    if (!reserva) return;
+    const { saldo } = obtenerSaldo(codigo);
+    const monto = Math.min(montoSolicitado, saldo);
     if (monto <= 0) return;
     const completa = monto >= saldo;
     const recibo = "#PG-" + n4();
-    const valorStr = fmtMoney(monto);
-    const pgTono = completa ? "ok" : "warn";
-    const pgEstado = completa ? "Pagado" : "Abono";
-    const resTono = completa ? "ok" : "warn";
-    const resEstado = completa ? "Pagada" : "Pago parcial";
-    setData((d) => ({
-      ...d,
-      pagos: [[recibo, code, r[1], "Tarjeta crédito", valorStr, hoy(), pgTono, pgEstado], ...d.pagos],
-      reservas: d.reservas.map((x) => (x[0] === code ? [...x.slice(0, 6), resTono, resEstado] : x)),
-      facturas: completa ? d.facturas.map((x) => (x[3] === code ? [...x.slice(0, 6), "ok", "Aceptada"] : x)) : d.facturas,
-    }));
-    if (isSupabaseReady) {
+    const valorTexto = mostrarDinero(monto);
+    const tonoPago = completa ? "ok" : "warn";
+    const estadoPago = completa ? "Pagado" : "Abono";
+    const tonoReserva = completa ? "ok" : "warn";
+    const estadoReserva = completa ? "Pagada" : "Pago parcial";
+    if (supabaseConfigurado) {
+      await validarAcceso();
+      await insertarFila("pagos", { recibo, reserva: codigo, cliente: reserva[1], metodo: "Tarjeta crédito", valor: valorTexto, fecha: hoy(), tono: tonoPago, estado: estadoPago });
       try {
-        await insertRow("pagos", { recibo, reserva: code, cliente: r[1], metodo: "Tarjeta crédito", valor: valorStr, fecha: hoy(), tono: pgTono, estado: pgEstado });
-        await updateRows("reservas", "codigo", code, { tono: resTono, estado: resEstado });
-        if (completa) await updateRows("facturas", "reserva", code, { tono: "ok", estado: "Aceptada" });
-      } catch (err) { console.warn("No se persistió en Supabase:", err.message); }
+        await actualizarFilas("reservas", "codigo", codigo, { tono: tonoReserva, estado: estadoReserva });
+        if (completa) await actualizarFilas("facturas", "reserva", codigo, { tono: "ok", estado: "Aceptada" });
+      } catch { throw new Error(t("acceso.pagoParcial")); }
     }
+    setDatos((actuales) => ({
+      ...actuales,
+      pagos: [[recibo, codigo, reserva[1], "Tarjeta crédito", valorTexto, hoy(), tonoPago, estadoPago], ...actuales.pagos],
+      reservas: actuales.reservas.map((fila) => (fila[0] === codigo ? [...fila.slice(0, 6), tonoReserva, estadoReserva] : fila)),
+      facturas: completa ? actuales.facturas.map((fila) => (fila[3] === codigo ? [...fila.slice(0, 6), "ok", "Aceptada"] : fila)) : actuales.facturas,
+    }));
   };
 
   // Activar / desactivar (soft) sin borrar el registro
-  const toggleActivo = async (entity, codigo, activo) => {
-    const idx = entity === "clientes" ? 6 : 5;
-    setData((d) => ({ ...d, [entity]: d[entity].map((r) => { if (r[0] !== codigo) return r; const c = [...r]; c[idx] = activo; return c; }) }));
-    if (isSupabaseReady) { try { await updateRows(entity, "codigo", codigo, { activo }); } catch (err) { console.warn(err.message); } }
+  const cambiarActivo = async (entidad, codigo, activo) => {
+    const indice = entidad === "clientes" ? 6 : 5;
+    if (supabaseConfigurado) { await validarAcceso(); await actualizarFilas(entidad, "codigo", codigo, { activo }); }
+    setDatos((actuales) => ({ ...actuales, [entidad]: actuales[entidad].map((fila) => { if (fila[0] !== codigo) return fila; const nueva = [...fila]; nueva[indice] = activo; return nueva; }) }));
   };
 
   // Guardar observaciones + rango de fechas
-  const saveObs = async (entity, codigo, o) => {
-    const [oi, di, hi] = entity === "clientes" ? [7, 8, 9] : [6, 7, 8];
-    setData((d) => ({ ...d, [entity]: d[entity].map((r) => { if (r[0] !== codigo) return r; const c = [...r]; c[oi] = o.obs; c[di] = o.desde; c[hi] = o.hasta; return c; }) }));
-    if (isSupabaseReady) { try { await updateRows(entity, "codigo", codigo, { observaciones: o.obs, obs_desde: o.desde || null, obs_hasta: o.hasta || null }); } catch (err) { console.warn(err.message); } }
+  const guardarObservacion = async (entidad, codigo, observacion) => {
+    const [indiceTexto, indiceDesde, indiceHasta] = entidad === "clientes" ? [7, 8, 9] : [6, 7, 8];
+    if (supabaseConfigurado) { await validarAcceso(); await actualizarFilas(entidad, "codigo", codigo, { observaciones: observacion.obs, obs_desde: observacion.desde || null, obs_hasta: observacion.hasta || null }); }
+    setDatos((actuales) => ({ ...actuales, [entidad]: actuales[entidad].map((fila) => { if (fila[0] !== codigo) return fila; const nueva = [...fila]; nueva[indiceTexto] = observacion.obs; nueva[indiceDesde] = observacion.desde; nueva[indiceHasta] = observacion.hasta; return nueva; }) }));
   };
 
-  const addAction = (key) => (
-    <AddDialog label={FORMS[key].label} title={FORMS[key].title} fields={FORMS[key].fields} onSubmit={submitFor(key)} selects={selects} />
+  const accionAgregar = (clave) => (
+    <DialogoAgregar label={FORMULARIOS[clave].etiqueta} title={FORMULARIOS[clave].titulo} fields={FORMULARIOS[clave].campos} onSubmit={enviarFormulario(clave)} selects={opciones} />
   );
 
-  const render = () => {
-    switch (view) {
-      case "dash": return <Dashboard reservas={data.reservas} />;
+  const mostrarVista = () => {
+    switch (vista) {
+      case "dash": return <Resumen datos={datos} />;
       case "clientes":
-        return <PeopleView title={t("nav.clientes")} action={addAction("clientes")}
-          rows={data.clientes}
-          leadCols={[{ label: "ID", idx: 0 }, { label: t("col.nombre"), idx: 1 }, { label: t("col.doc"), idx: 2 }, { label: t("col.correo"), idx: 3 }, { label: t("col.tel"), idx: 4 }]}
-          actIdx={6} obsIdx={7} desIdx={8} hasIdx={9}
-          onToggle={(c, a) => toggleActivo("clientes", c, a)} onObs={(c, o) => saveObs("clientes", c, o)} />;
+        return <VistaPersonas titulo={t("nav.clientes")} accion={accionAgregar("clientes")}
+          filas={datos.clientes}
+          columnas={[{ label: "ID", idx: 0 }, { label: t("col.nombre"), idx: 1 }, { label: t("col.doc"), idx: 2 }, { label: t("col.correo"), idx: 3 }, { label: t("col.tel"), idx: 4 }]}
+          indiceActivo={6} indiceObservacion={7} indiceDesde={8} indiceHasta={9}
+          alCambiarActivo={(codigo, activo) => cambiarActivo("clientes", codigo, activo)} alObservar={(codigo, observacion) => guardarObservacion("clientes", codigo, observacion)} />;
       case "empleados":
-        return <PeopleView title={t("nav.empleados")} action={addAction("empleados")}
-          rows={data.empleados || []}
-          leadCols={[{ label: "ID", idx: 0 }, { label: t("col.nombre"), idx: 1 }, { label: t("col.cargo"), idx: 2 }, { label: t("col.correo"), idx: 3 }, { label: t("col.tel"), idx: 4 }]}
-          actIdx={5} obsIdx={6} desIdx={7} hasIdx={8}
-          onToggle={(c, a) => toggleActivo("empleados", c, a)} onObs={(c, o) => saveObs("empleados", c, o)} />;
+        return <GestionAccesosEmpleados empleados={datos.empleados} validarAcceso={validarAcceso}>{(mostrarAcceso) => <VistaPersonas titulo={t("nav.empleados")} accion={accionAgregar("empleados")}
+          mostrarAcceso={mostrarAcceso}
+          filas={datos.empleados || []}
+          columnas={[{ label: "ID", idx: 0 }, { label: t("col.nombre"), idx: 1 }, { label: t("col.cargo"), idx: 2 }, { label: t("col.correo"), idx: 3 }, { label: t("col.tel"), idx: 4 }]}
+          indiceActivo={5} indiceObservacion={6} indiceDesde={7} indiceHasta={8}
+          alCambiarActivo={(codigo, activo) => cambiarActivo("empleados", codigo, activo)} alObservar={(codigo, observacion) => guardarObservacion("empleados", codigo, observacion)} />}</GestionAccesosEmpleados>;
       case "paquetes":
-        return <Paquetes paquetes={data.paquetes} action={addAction("paquetes")} />;
+        return <VistaPaquetes paquetes={datos.paquetes} accion={accionAgregar("paquetes")} />;
       case "reservas":
-        return <ReservasView reservas={data.reservas} onPay={payReserva} getInfo={payInfo} action={addAction("reservas")} />;
+        return <VistaReservas reservas={datos.reservas} alPagar={pagarReserva} obtenerSaldo={obtenerSaldo} accion={accionAgregar("reservas")} />;
       case "pagos":
-        return <DataView title={t("nav.pagos")} action={addAction("pagos")}
-          cols={["Recibo", "Reserva", "Cliente", "Método", "Valor", "Fecha", "Estado"]}
-          rows={data.pagos.map((r) => [r[0], r[1], r[2], r[3], r[4], r[5], { tone: r[6], text: r[7] }])} />;
+        return <VistaDatos titulo={t("nav.pagos")} accion={accionAgregar("pagos")}
+          columnas={["Recibo", "Reserva", "Cliente", "Método", "Valor", "Fecha", "Estado"]}
+          filas={datos.pagos.map((fila) => [fila[0], fila[1], fila[2], fila[3], fila[4], fila[5], { tono: fila[6], texto: fila[7] }])} />;
       case "facturas":
-        return <DataView title={t("nav.facturas")} action={addAction("facturas")}
-          cols={["Factura", "Cliente", "NIT / CC", "Reserva", "Valor + IVA", "Fecha", "Estado DIAN"]}
-          rows={data.facturas.map((r) => [r[0], r[1], r[2], r[3], r[4], r[5], { tone: r[6], text: r[7] }])} />;
+        return <VistaDatos titulo={t("nav.facturas")} accion={accionAgregar("facturas")}
+          columnas={["Factura", "Cliente", "NIT / CC", "Reserva", "Valor + IVA", "Fecha", "Estado DIAN"]}
+          filas={datos.facturas.map((fila) => [fila[0], fila[1], fila[2], fila[3], fila[4], fila[5], { tono: fila[6], texto: fila[7] }])} />;
       case "proveedores":
-        return <DataView title={t("nav.proveedores")} action={addAction("proveedores")}
-          cols={["Proveedor", "Tipo", "Contacto", "Convenio", "Estado"]}
-          rows={data.proveedores.map((r) => [r[0], r[1], r[2], r[3], { tone: r[4], text: r[5] }])} />;
-      case "reportes": return <Reportes />;
+        return <VistaDatos titulo={t("nav.proveedores")} accion={accionAgregar("proveedores")}
+          columnas={["Proveedor", "Tipo", "Contacto", "Convenio", "Estado"]}
+          filas={datos.proveedores.map((fila) => [fila[0], fila[1], fila[2], fila[3], { tono: fila[4], texto: fila[5] }])} />;
+      case "reportes": return <VistaReportes datos={datos} />;
       default: return null;
     }
   };
@@ -1108,103 +1062,94 @@ function Shell({ onLogout, dark, setDark }) {
     <div className="relative z-10 flex min-h-screen">
       <motion.aside
         initial={{ x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}
-        className={`fixed z-30 h-screen w-64 shrink-0 border-r border-border bg-sidebar p-4 backdrop-blur-xl transition-transform md:sticky md:top-0 md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed z-30 h-screen w-64 shrink-0 border-r border-border bg-sidebar p-4 backdrop-blur-xl transition-transform md:sticky md:top-0 md:translate-x-0 ${menuAbierto ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <button type="button" onClick={() => { setView("dash"); setOpen(false); }} title={t("nav.dash")}
+        <button type="button" onClick={() => { cambiarVista("dash"); cambiarMenu(false); }} title={t("nav.dash")}
           className="mb-6 flex w-full items-center gap-3 rounded-xl px-2 py-1 transition-colors hover:bg-sky-50 dark:hover:bg-sky-400/10">
-          <LogoMark size="h-10 w-10" img="h-8 w-8" />
-          <span className="text-lg font-bold text-foreground">Nóva<GradientText colors={brandColors}>Travel</GradientText></span>
+          <Marca tamano="h-10 w-10" imagen="h-8 w-8" />
+          <span className="text-lg font-bold text-foreground">Nóva<TextoDegradado colors={coloresMarca}>Travel</TextoDegradado></span>
         </button>
         <nav className="space-y-1">
-          {NAV.map((n) => (
-            <div key={n.id}>
-              {n.group && <p className="mb-1 mt-4 px-2 text-[10.5px] font-semibold uppercase tracking-widest text-slate-400">{t("grp." + n.group)}</p>}
+          {NAVEGACION.map((opcion) => (
+            <div key={opcion.id}>
+              {opcion.group && <p className="mb-1 mt-4 px-2 text-[10.5px] font-semibold uppercase tracking-widest text-slate-400">{t("grp." + opcion.group)}</p>}
               <button
-                onClick={() => { setView(n.id); setOpen(false); }}
+                onClick={() => { cambiarVista(opcion.id); cambiarMenu(false); }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
-                  view === n.id
+                  vista === opcion.id
                     ? "border border-blue-200 dark:border-sky-500/30 bg-gradient-to-br from-sky-500/15 to-blue-600/15 font-medium text-blue-700 dark:text-sky-300 shadow-sm"
                     : "text-muted-foreground hover:bg-sky-50 dark:hover:bg-sky-400/10 hover:text-blue-700 dark:text-sky-300"
                 }`}
               >
-                <n.icon className="h-[18px] w-[18px]" />{t("nav." + n.id)}
+                <opcion.icon className="h-[18px] w-[18px]" />{t("nav." + opcion.id)}
               </button>
             </div>
           ))}
         </nav>
       </motion.aside>
 
-      {open && <div className="fixed inset-0 z-20 bg-slate-900/20 md:hidden" onClick={() => setOpen(false)} />}
+      {menuAbierto && <div className="fixed inset-0 z-20 bg-slate-900/20 md:hidden" onClick={() => cambiarMenu(false)} />}
 
-      <main className="min-h-screen flex-1 p-6 md:p-8">
+      <main className="min-h-screen min-w-0 flex-1 p-6 md:p-8">
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
           className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="icon" className="md:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></Button>
+            <Button variant="outline" size="icon" aria-label={t("acceso.menu")} className="md:hidden" onClick={() => cambiarMenu(true)}><Menu className="h-5 w-5" /></Button>
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">{t1}</h1>
-              <p className="text-sm text-muted-foreground">{t2}</p>
+              <h1 className="text-2xl font-semibold text-foreground">{tituloVista}</h1>
+              <p className="text-sm text-muted-foreground">{subtituloVista}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <DbBadge source={source} />
-            <div className={`hidden items-center gap-2 rounded-xl px-3.5 py-2 text-sm text-muted-foreground lg:flex ${glass}`}>
+            <EstadoConexion origen={origen} />
+            <div className={`hidden items-center gap-2 rounded-xl px-3.5 py-2 text-sm text-muted-foreground lg:flex ${cristal}`}>
               <Search className="h-4 w-4" />
               <input placeholder={t("tb.search")} className="w-32 bg-transparent text-foreground outline-none placeholder:text-slate-400" />
             </div>
-            <TopControls dark={dark} setDark={setDark} />
-            <div className={`hidden items-center gap-2 rounded-xl px-3 py-1.5 sm:flex ${glass}`}>
-              <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-xs font-bold text-white">AF</div>
-              <span className="hidden text-sm text-foreground md:inline">Andrés F.</span>
+            <ControlesSuperiores oscuro={oscuro} cambiarOscuro={cambiarOscuro} />
+            <div className={`hidden items-center gap-2 rounded-xl px-3 py-1.5 sm:flex ${cristal}`}>
+              <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-sky-400 to-blue-600 text-xs font-bold text-white">{perfil.nombre.slice(0, 2).toUpperCase()}</div>
+              <span className="hidden text-sm text-foreground md:inline">{perfil.nombre}</span>
             </div>
-            <Button variant="outline" onClick={onLogout} className="gap-2 border-border text-muted-foreground hover:border-rose-400 hover:text-rose-500">
+            <Button variant="outline" aria-label={t("tb.logout")} onClick={alSalir} className="gap-2 border-border text-muted-foreground hover:border-rose-400 hover:text-rose-500">
               <LogOut className="h-4 w-4" /><span className="hidden sm:inline">{t("tb.logout")}</span>
             </Button>
           </div>
         </motion.div>
 
         <AnimatePresence mode="wait">
-          <motion.div key={view}
+          <motion.div key={vista}
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25 }}>
-            {render()}
+            {origen === "loading" ? <p role="status">{t("acceso.validando")}</p> : errorDatos ? <p role="alert" className="text-rose-600">{t(errorDatos)}</p> : mostrarVista()}
           </motion.div>
         </AnimatePresence>
 
-        <Footer />
+        <PiePagina />
       </main>
     </div>
   );
 }
 
 /* ---------------------------------- App ---------------------------------- */
-export default function App() {
-  const [auth, setAuth] = useState(false);
-  const [dark, setDark] = useTheme();
+export default function Aplicacion() {
+  const [oscuro, cambiarOscuro] = useTema();
 
   return (
-    <ClickSpark sparkColor="#2563eb" sparkCount={9} sparkRadius={18}>
+    <ChispasAlClic sparkColor="#2563eb" sparkCount={9} sparkRadius={18}>
       <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-sky-50 via-white to-blue-50 text-foreground dark:from-[#070d20] dark:via-[#0a1226] dark:to-[#0b1430]">
         <div className="pointer-events-none fixed inset-0 z-0">
-          <Squares direction="diagonal" speed={0.4} squareSize={46}
-            borderColor={dark ? "rgba(56,189,248,0.10)" : "rgba(37,99,235,0.10)"}
-            hoverFillColor="rgba(56,189,248,0.10)" fadeColor={dark ? "#070d20" : "#eef4ff"} />
+          <Cuadricula direction="diagonal" speed={0.4} squareSize={46}
+            borderColor={oscuro ? "rgba(56,189,248,0.10)" : "rgba(37,99,235,0.10)"}
+            hoverFillColor="rgba(56,189,248,0.10)" fadeColor={oscuro ? "#070d20" : "#eef4ff"} />
         </div>
         <div className="pointer-events-none fixed -right-24 -top-24 z-0 h-[420px] w-[420px] rounded-full bg-sky-300/25 blur-[90px] dark:bg-blue-600/20" />
         <div className="pointer-events-none fixed -bottom-32 -left-24 z-0 h-[380px] w-[380px] rounded-full bg-blue-300/20 blur-[90px] dark:bg-sky-500/15" />
 
-        {!auth && <div className="fixed right-4 top-4 z-20"><TopControls dark={dark} setDark={setDark} /></div>}
+        <PuertaAcceso panelAdministrador={PanelPrincipal} propiedadesPanel={{ oscuro, cambiarOscuro }} controles={<ControlesSuperiores oscuro={oscuro} cambiarOscuro={cambiarOscuro} />} />
 
-        <AnimatePresence mode="wait">
-          {auth
-            ? <Shell key="shell" onLogout={() => setAuth(false)} dark={dark} setDark={setDark} />
-            : <motion.div key="login" exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.35 }}>
-                <Login onLogin={() => setAuth(true)} />
-              </motion.div>}
-        </AnimatePresence>
-
-        <CookieBanner />
+        <AvisoCookies />
       </div>
-    </ClickSpark>
+    </ChispasAlClic>
   );
 }

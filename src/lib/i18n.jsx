@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-export const LANGS = [
+export const IDIOMAS = [
   { code: "es", label: "Español", flag: "ES" },
   { code: "en", label: "English", flag: "EN" },
   { code: "fr", label: "Français", flag: "FR" },
@@ -9,13 +9,13 @@ export const LANGS = [
 ];
 
 // Diccionario. Español es la base; si falta una clave, cae a español.
-const DICT = {
+const DICCIONARIO = {
   es: {
     "app.tagline": "Sistema Empresarial · Gestión Integral de Agencia de Viajes",
     "login.user": "Usuario", "login.pass": "Contraseña", "login.enter": "Ingresar al sistema",
     "login.userPh": "Ingrese su usuario", "login.access": "Acceso interno del equipo",
     "login.bad": "Usuario o contraseña incorrectos.",
-    "nav.dash": "Dashboard", "nav.clientes": "Clientes", "nav.paquetes": "Paquetes turísticos",
+    "nav.dash": "Resumen", "nav.clientes": "Clientes", "nav.paquetes": "Paquetes turísticos",
     "nav.reservas": "Reservas", "nav.pagos": "Pagos", "nav.facturas": "Facturación",
     "nav.proveedores": "Proveedores", "nav.reportes": "Reportes", "nav.empleados": "Empleados",
     "grp.operacion": "Operación", "grp.finanzas": "Finanzas", "grp.gestion": "Gestión", "grp.equipo": "Equipo",
@@ -34,7 +34,7 @@ const DICT = {
     "col.cargo": "Cargo", "col.rango": "Vigencia", "col.nombre": "Nombre",
     "st.active": "Activo", "st.inactive": "Inactivo", "st.paid": "Pagada",
     "dash.filter": "Filtrar por fecha de viaje", "dash.from": "Desde", "dash.to": "Hasta", "dash.clear": "Limpiar",
-    "dash.ventas": "Ventas por mes", "dash.destinos": "Destinos más solicitados", "dash.recientes": "Reservas recientes",
+    "dash.ventas": "Pagos por mes", "dash.destinos": "Paquetes más reservados", "dash.recientes": "Reservas recientes",
     "pkg.salida": "Salida", "pkg.regreso": "Regreso",
     "theme.dark": "Modo oscuro", "theme.light": "Modo claro", "lang.label": "Idioma",
     "pol.privacy": "Política de privacidad", "pol.cookies": "Política de cookies",
@@ -71,7 +71,7 @@ const DICT = {
     "col.cargo": "Role", "col.rango": "Validity", "col.nombre": "Name",
     "st.active": "Active", "st.inactive": "Inactive", "st.paid": "Paid",
     "dash.filter": "Filter by travel date", "dash.from": "From", "dash.to": "To", "dash.clear": "Clear",
-    "dash.ventas": "Monthly sales", "dash.destinos": "Top destinations", "dash.recientes": "Recent bookings",
+    "dash.ventas": "Monthly payments", "dash.destinos": "Most booked packages", "dash.recientes": "Recent bookings",
     "pkg.salida": "Departure", "pkg.regreso": "Return",
     "theme.dark": "Dark mode", "theme.light": "Light mode", "lang.label": "Language",
     "pol.privacy": "Privacy policy", "pol.cookies": "Cookie policy",
@@ -108,7 +108,7 @@ const DICT = {
     "col.cargo": "Poste", "col.rango": "Validité", "col.nombre": "Nom",
     "st.active": "Actif", "st.inactive": "Inactif", "st.paid": "Payée",
     "dash.filter": "Filtrer par date de voyage", "dash.from": "Du", "dash.to": "Au", "dash.clear": "Effacer",
-    "dash.ventas": "Ventes par mois", "dash.destinos": "Destinations populaires", "dash.recientes": "Réservations récentes",
+    "dash.ventas": "Paiements par mois", "dash.destinos": "Forfaits les plus réservés", "dash.recientes": "Réservations récentes",
     "pkg.salida": "Départ", "pkg.regreso": "Retour",
     "theme.dark": "Mode sombre", "theme.light": "Mode clair", "lang.label": "Langue",
     "pol.privacy": "Politique de confidentialité", "pol.cookies": "Politique de cookies",
@@ -145,7 +145,7 @@ const DICT = {
     "col.cargo": "Должность", "col.rango": "Срок", "col.nombre": "Имя",
     "st.active": "Активен", "st.inactive": "Неактивен", "st.paid": "Оплачено",
     "dash.filter": "Фильтр по дате поездки", "dash.from": "С", "dash.to": "По", "dash.clear": "Очистить",
-    "dash.ventas": "Продажи по месяцам", "dash.destinos": "Популярные направления", "dash.recientes": "Недавние брони",
+    "dash.ventas": "Платежи по месяцам", "dash.destinos": "Популярные турпакеты", "dash.recientes": "Недавние брони",
     "pkg.salida": "Вылет", "pkg.regreso": "Возврат",
     "theme.dark": "Тёмная тема", "theme.light": "Светлая тема", "lang.label": "Язык",
     "pol.privacy": "Политика конфиденциальности", "pol.cookies": "Политика cookie",
@@ -182,7 +182,7 @@ const DICT = {
     "col.cargo": "Cargo", "col.rango": "Vigência", "col.nombre": "Nome",
     "st.active": "Ativo", "st.inactive": "Inativo", "st.paid": "Paga",
     "dash.filter": "Filtrar por data da viagem", "dash.from": "De", "dash.to": "Até", "dash.clear": "Limpar",
-    "dash.ventas": "Vendas por mês", "dash.destinos": "Destinos mais procurados", "dash.recientes": "Reservas recentes",
+    "dash.ventas": "Pagamentos por mês", "dash.destinos": "Pacotes mais reservados", "dash.recientes": "Reservas recentes",
     "pkg.salida": "Saída", "pkg.regreso": "Retorno",
     "theme.dark": "Modo escuro", "theme.light": "Modo claro", "lang.label": "Idioma",
     "pol.privacy": "Política de privacidade", "pol.cookies": "Política de cookies",
@@ -197,15 +197,76 @@ const DICT = {
   },
 };
 
-const LangContext = createContext({ lang: "es", setLang: () => {}, t: (k) => k });
-
-export function LangProvider({ children }) {
-  const [lang, setLang] = useState(() => {
-    try { return localStorage.getItem("nt_lang") || "es"; } catch { return "es"; }
-  });
-  useEffect(() => { try { localStorage.setItem("nt_lang", lang); } catch { /* noop */ } }, [lang]);
-  const t = (k) => (DICT[lang] && DICT[lang][k]) || DICT.es[k] || k;
-  return <LangContext.Provider value={{ lang, setLang, t }}>{children}</LangContext.Provider>;
+// Textos de autenticación y accesos en el mismo orden que IDIOMAS.
+const TEXTOS_ACCESO = {
+  errorEnlace: ["El enlace no se pudo validar: puede haber vencido o haberse usado. No se cambiará la contraseña de una sesión anterior. Solicita un enlace nuevo.", "The link could not be validated: it may have expired or been used. A previous session’s password will not be changed. Request a new link.", "Le lien n’a pas pu être validé : il peut être expiré ou déjà utilisé. Le mot de passe d’une session précédente ne sera pas modifié. Demandez un nouveau lien.", "Не удалось проверить ссылку: она могла истечь или быть использована. Пароль предыдущего сеанса не будет изменён. Запросите новую ссылку.", "Não foi possível validar o link: ele pode ter expirado ou sido usado. A senha de uma sessão anterior não será alterada. Solicite um novo link."],
+  sesionActual: ["Sesión que sigue abierta:", "Session still signed in:", "Session toujours ouverte :", "Сеанс, который остаётся открытым:", "Sessão que continua aberta:"],
+  cuentaDestino: ["Cuenta cuya contraseña se modificará:", "Account whose password will change:", "Compte dont le mot de passe sera modifié :", "Учётная запись, пароль которой будет изменён:", "Conta cuja senha será alterada:"],
+  avisoIdentidad: ["El marcador de la URL no prueba que un enlace sea válido. Esta acción usa la cuenta verificada que se muestra. Si esperabas otra cuenta, cierra sesión y solicita un enlace nuevo.", "The URL marker does not prove a link is valid. This action uses the verified account shown here. If you expected another account, sign out and request a new link.", "Le marqueur de l’URL ne prouve pas qu’un lien est valide. Cette action utilise le compte vérifié affiché. Si vous attendiez un autre compte, déconnectez-vous et demandez un nouveau lien.", "Метка в URL не подтверждает действительность ссылки. Действие использует указанную проверенную учётную запись. Если вы ожидали другую, выйдите и запросите новую ссылку.", "O marcador da URL não prova que um link é válido. Esta ação usa a conta verificada exibida. Se esperava outra conta, saia e solicite um novo link."],
+  confirmarCuenta: ["Confirmo que quiero cambiar la contraseña de la cuenta mostrada.", "I confirm I want to change the password of the account shown.", "Je confirme vouloir modifier le mot de passe du compte affiché.", "Я подтверждаю изменение пароля указанной учётной записи.", "Confirmo que quero alterar a senha da conta exibida."],
+  cuentaCambio: ["La sesión cambió. No se envió la contraseña. Comprueba la cuenta actual antes de reintentar.", "The session changed. The password was not sent. Check the current account before retrying.", "La session a changé. Le mot de passe n’a pas été envoyé. Vérifiez le compte actuel avant de réessayer.", "Сеанс изменился. Пароль не отправлен. Проверьте текущую учётную запись перед повторной попыткой.", "A sessão mudou. A senha não foi enviada. Confira a conta atual antes de tentar novamente."],
+  identidadNoVerificada: ["No se pudo verificar la identidad de esta sesión. No se habilitó el cambio de contraseña; inicia sesión de nuevo o solicita otro enlace.", "This session’s identity could not be verified. Password changes are disabled; sign in again or request another link.", "L’identité de cette session n’a pas pu être vérifiée. Le changement de mot de passe est désactivé ; reconnectez-vous ou demandez un autre lien.", "Не удалось проверить личность в этом сеансе. Изменение пароля отключено; войдите снова или запросите другую ссылку.", "Não foi possível verificar a identidade desta sessão. A alteração de senha está desabilitada; entre novamente ou solicite outro link."],
+  menu: ["Abrir navegación", "Open navigation", "Ouvrir la navigation", "Открыть навигацию", "Abrir navegação"],
+  sinRegistros: ["No hay registros para mostrar.", "No records to display.", "Aucun enregistrement à afficher.", "Нет записей для отображения.", "Não há registros para mostrar."],
+  reservaParcial: ["La reserva se guardó, pero su factura no. Recarga los datos antes de reintentar para no duplicarla.", "The booking was saved, but its invoice was not. Reload before retrying to avoid duplicates.", "La réservation a été enregistrée, mais pas sa facture. Rechargez avant de réessayer pour éviter les doublons.", "Бронь сохранена, но счёт не сохранён. Перезагрузите данные перед повторной попыткой, чтобы избежать дубликатов.", "A reserva foi salva, mas sua fatura não. Recarregue antes de tentar novamente para evitar duplicação."],
+  pagoParcial: ["El pago se guardó, pero no todos los estados se actualizaron. Recarga antes de reintentar para no duplicar el pago.", "The payment was saved, but some statuses were not updated. Reload before retrying to avoid a duplicate payment.", "Le paiement a été enregistré, mais certains statuts n’ont pas été mis à jour. Rechargez avant de réessayer pour éviter un double paiement.", "Платёж сохранён, но не все статусы обновлены. Перезагрузите данные перед повторной попыткой, чтобы не дублировать платёж.", "O pagamento foi salvo, mas nem todos os estados foram atualizados. Recarregue antes de tentar novamente para não duplicar o pagamento."],
+  demo: ["Demostración local", "Local demo", "Démonstration locale", "Локальная демонстрация", "Demonstração local"],
+  demoAviso: ["Supabase no está configurado. Los cambios solo viven en esta sesión; no se crean cuentas ni se envían correos.", "Supabase is not configured. Changes last only for this session; no accounts or emails are created.", "Supabase n’est pas configuré. Les modifications restent dans cette session ; aucun compte ni e-mail n’est créé.", "Supabase не настроен. Изменения действуют только в этом сеансе; аккаунты не создаются, письма не отправляются.", "Supabase não está configurado. Alterações duram apenas nesta sessão; não são criadas contas nem enviados e-mails."],
+  abrirDemo: ["Explorar demostración", "Explore demo", "Explorer la démo", "Открыть демонстрацию", "Explorar demonstração"],
+  validando: ["Validando acceso…", "Checking access…", "Vérification de l’accès…", "Проверка доступа…", "Validando acesso…"],
+  bloqueado: ["Acceso no disponible", "Access unavailable", "Accès indisponible", "Доступ недоступен", "Acesso indisponível"],
+  preparacion: ["Si el servicio aún no está preparado, solicita al responsable revisar la migración, el perfil, el despliegue de gestionar-accesos y la configuración de Auth/correo. No se simula el éxito.", "If the service is not ready, ask the owner to check the migration, profile, gestionar-accesos deployment and Auth/email settings. Success is never simulated.", "Si le service n’est pas prêt, demandez au responsable de vérifier la migration, le profil, le déploiement de gestionar-accesos et Auth/e-mail. Aucun succès n’est simulé.", "Если сервис не готов, попросите ответственного проверить миграцию, профиль, развёртывание gestionar-accesos и настройки Auth/почты. Успех не имитируется.", "Se o serviço não estiver pronto, peça ao responsável para revisar a migração, o perfil, a implantação de gestionar-accesos e Auth/e-mail. O sucesso não é simulado."],
+  reintentar: ["Revalidar acceso", "Check access again", "Revérifier l’accès", "Проверить доступ снова", "Revalidar acesso"],
+  bienvenida: ["Bienvenido", "Welcome", "Bienvenue", "Добро пожаловать", "Bem-vindo"],
+  cuentaAsesor: ["Tu cuenta de asesor está activa. La operación del asesor estará disponible en una próxima entrega. Esta cuenta no tiene acceso al panel administrativo.", "Your agent account is active. Agent operations will be available in a future release. This account cannot access the admin panel.", "Votre compte conseiller est actif. Les opérations seront disponibles dans une prochaine livraison. Ce compte n’a pas accès au panneau administrateur.", "Аккаунт консультанта активен. Рабочие функции появятся в следующем выпуске. Этот аккаунт не имеет доступа к панели администратора.", "Sua conta de consultor está ativa. A operação estará disponível em uma próxima entrega. Esta conta não tem acesso ao painel administrativo."],
+  enlaceVencido: ["No hay sesión para este enlace. Puede haber vencido o haberse usado; solicita uno nuevo.", "No session is available for this link. It may have expired or been used; request a new one.", "Aucune session pour ce lien. Il peut être expiré ou déjà utilisé ; demandez-en un nouveau.", "Для этой ссылки нет сеанса. Возможно, она истекла или использована; запросите новую.", "Não há sessão para este link. Ele pode ter expirado ou sido usado; solicite outro."],
+  ingresar: ["Acceso del equipo", "Team sign-in", "Connexion de l’équipe", "Вход для сотрудников", "Acesso da equipe"],
+  recuperar: ["Recuperar contraseña", "Recover password", "Récupérer le mot de passe", "Восстановить пароль", "Recuperar senha"],
+  contrasena: ["Establecer contraseña", "Set password", "Définir le mot de passe", "Установить пароль", "Definir senha"],
+  confirmar: ["Confirmar contraseña", "Confirm password", "Confirmer le mot de passe", "Подтвердить пароль", "Confirmar senha"],
+  minimo: ["Usa al menos 12 caracteres. No compartas tu contraseña.", "Use at least 12 characters. Never share your password.", "Utilisez au moins 12 caractères. Ne partagez pas votre mot de passe.", "Используйте не менее 12 символов. Не сообщайте свой пароль.", "Use pelo menos 12 caracteres. Não compartilhe sua senha."],
+  noCoinciden: ["Las contraseñas no coinciden.", "Passwords do not match.", "Les mots de passe ne correspondent pas.", "Пароли не совпадают.", "As senhas não coincidem."],
+  correoSolicitado: ["Si el correo corresponde a una cuenta habilitada, recibirás instrucciones para recuperar la contraseña.", "If this email belongs to an eligible account, you will receive password recovery instructions.", "Si cet e-mail correspond à un compte autorisé, vous recevrez les instructions de récupération.", "Если адрес соответствует разрешённой учётной записи, вы получите инструкции для восстановления пароля.", "Se o e-mail corresponder a uma conta habilitada, você receberá instruções para recuperar a senha."],
+  esperar: ["Procesando…", "Processing…", "Traitement…", "Обработка…", "Processando…"],
+  enviar: ["Solicitar enlace", "Request link", "Demander un lien", "Запросить ссылку", "Solicitar link"],
+  olvido: ["¿Olvidaste tu contraseña?", "Forgot your password?", "Mot de passe oublié ?", "Забыли пароль?", "Esqueceu sua senha?"],
+  volver: ["Volver al inicio de sesión", "Back to sign-in", "Retour à la connexion", "Вернуться ко входу", "Voltar ao acesso"],
+  estadoEmpleado: ["Estado del empleado", "Employee status", "Statut de l’employé", "Статус сотрудника", "Estado do funcionário"],
+  acceso: ["Acceso al sistema", "System access", "Accès au système", "Доступ к системе", "Acesso ao sistema"],
+  sinAcceso: ["Sin acceso", "No access", "Sans accès", "Нет доступа", "Sem acesso"],
+  invitado: ["Invitado · pendiente de aceptación", "Invited · awaiting acceptance", "Invité · en attente d’acceptation", "Приглашён · ожидает принятия", "Convidado · aguardando aceitação"],
+  pendiente: ["Pendiente de vinculación", "Linking pending", "Association en attente", "Ожидает привязки", "Vinculação pendente"],
+  activo: ["Activo", "Active", "Actif", "Активен", "Ativo"],
+  suspendido: ["Suspendido", "Suspended", "Suspendu", "Приостановлен", "Suspenso"],
+  invitar: ["Habilitar por correo", "Enable by email", "Activer par e-mail", "Предоставить доступ по почте", "Habilitar por e-mail"],
+  reenviar: ["Reenviar enlace", "Resend link", "Renvoyer le lien", "Отправить ссылку повторно", "Reenviar link"],
+  suspender: ["Suspender acceso", "Suspend access", "Suspendre l’accès", "Приостановить доступ", "Suspender acesso"],
+  reactivar: ["Reactivar acceso", "Reactivate access", "Réactiver l’accès", "Возобновить доступ", "Reativar acesso"],
+  actualizado: ["Acceso actualizado. Consulta el estado vigente en la tabla.", "Access updated. Check the current status in the table.", "Accès mis à jour. Consultez le statut actuel dans le tableau.", "Доступ обновлён. Проверьте текущий статус в таблице.", "Acesso atualizado. Consulte o estado atual na tabela."],
+  envioAceptado: ["Solicitud de envío aceptada. Esto no garantiza la entrega del correo; revisa el estado del acceso.", "Email request accepted. This does not guarantee delivery; check the access status.", "Demande d’envoi acceptée. La livraison de l’e-mail n’est pas garantie ; vérifiez le statut d’accès.", "Запрос на отправку принят. Доставка письма не гарантируется; проверьте статус доступа.", "Solicitação de envio aceita. Isso não garante a entrega do e-mail; confira o estado do acesso."],
+  respuestaInvalida: ["El servicio no confirmó el resultado. Actualiza los accesos antes de reintentar.", "The service did not confirm the result. Refresh access before retrying.", "Le service n’a pas confirmé le résultat. Actualisez les accès avant de réessayer.", "Сервис не подтвердил результат. Обновите доступы перед повторной попыткой.", "O serviço não confirmou o resultado. Atualize os acessos antes de tentar novamente."],
+  refrescar: ["Actualizar accesos", "Refresh access", "Actualiser les accès", "Обновить доступы", "Atualizar acessos"],
+  soloReal: ["Los accesos reales no están disponibles en demostración.", "Real access management is unavailable in demo mode.", "La gestion des accès réels n’est pas disponible en démo.", "Управление реальным доступом недоступно в демонстрации.", "A gestão de acessos reais não está disponível na demonstração."],
+  administradorExterno: ["Administrador · gestión externa", "Administrator · managed externally", "Administrateur · gestion externe", "Администратор · внешнее управление", "Administrador · gestão externa"],
+  altaExplicita: ["Registrar un empleado no crea una cuenta. Habilita su acceso de asesor por correo de forma explícita.", "Adding an employee does not create an account. Explicitly enable agent access by email.", "Ajouter un employé ne crée pas de compte. Activez explicitement son accès conseiller par e-mail.", "Добавление сотрудника не создаёт аккаунт. Явно предоставьте доступ консультанта по почте.", "Registrar um funcionário não cria uma conta. Habilite explicitamente o acesso de consultor por e-mail."],
+  confirmarOperacion: ["Confirma esta operación sobre el acceso del empleado.", "Confirm this employee access operation.", "Confirmez cette opération sur l’accès de l’employé.", "Подтвердите операцию с доступом сотрудника.", "Confirme esta operação sobre o acesso do funcionário."],
+  sinContrasenaAdmin: ["El asesor establece su propia contraseña mediante el enlace. Esta acción no cambia su estado laboral ni concede un rol de administrador.", "The agent sets their own password using the link. This action does not change employment status or grant an admin role.", "Le conseiller définit son mot de passe via le lien. Cette action ne modifie pas son statut d’emploi et n’accorde aucun rôle administrateur.", "Консультант сам устанавливает пароль по ссылке. Это действие не меняет статус сотрудника и не предоставляет роль администратора.", "O consultor define a própria senha pelo link. Esta ação não altera seu estado de funcionário nem concede papel de administrador."],
+  confirmarAccion: ["Confirmar acción", "Confirm action", "Confirmer l’action", "Подтвердить действие", "Confirmar ação"],
+  errorDatos: ["No se pudieron cargar los datos conectados. Revisa tu acceso y la preparación del servidor; recarga para reintentar. No se usarán datos demo.", "Connected data could not be loaded. Check access and server setup; reload to retry. Demo data will not be used.", "Impossible de charger les données connectées. Vérifiez l’accès et la préparation du serveur ; rechargez pour réessayer. Aucune donnée démo ne sera utilisée.", "Не удалось загрузить данные сервера. Проверьте доступ и настройку сервера; перезагрузите страницу. Демо-данные не используются.", "Não foi possível carregar os dados conectados. Revise o acesso e a preparação do servidor; recarregue para tentar novamente. Dados demo não serão usados."],
+};
+for (const [clave, traducciones] of Object.entries(TEXTOS_ACCESO)) {
+  IDIOMAS.forEach((opcion, indice) => { DICCIONARIO[opcion.code][`acceso.${clave}`] = traducciones[indice]; });
 }
 
-export const useLang = () => useContext(LangContext);
+const ContextoIdioma = createContext({ lang: "es", setLang: () => {}, t: (clave) => clave });
+
+export function ProveedorIdioma({ children }) {
+  const [idioma, cambiarIdioma] = useState(() => {
+    try { return localStorage.getItem("nt_lang") || "es"; } catch { return "es"; }
+  });
+  useEffect(() => { try { localStorage.setItem("nt_lang", idioma); } catch { /* noop */ } }, [idioma]);
+  const t = (clave) => (DICCIONARIO[idioma] && DICCIONARIO[idioma][clave]) || DICCIONARIO.es[clave] || clave;
+  return <ContextoIdioma.Provider value={{ idioma, cambiarIdioma, t }}>{children}</ContextoIdioma.Provider>;
+}
+
+export const useIdioma = () => useContext(ContextoIdioma);

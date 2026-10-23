@@ -1,287 +1,134 @@
--- ============================================================
---  NóvaTravel · Esquema + datos (Supabase / PostgreSQL)
---  Ejecutar en: Supabase -> SQL Editor -> New query -> Run
--- ============================================================
-drop table if exists clientes, paquetes, reservas, pagos, facturas, proveedores, empleados cascade;
-
-create table clientes (
+-- NóvaTravel: tablas y muestra reducida. Ejecutar en el SQL Editor de Supabase.
+-- No elimina tablas ni registros existentes. La muestra solo se inserta si no existe.
+create table if not exists public.clientes (
   id bigint generated always as identity primary key,
   codigo text unique not null, nombre text not null, documento text,
   correo text, telefono text, reservas int default 0,
   activo boolean default true, observaciones text, obs_desde date, obs_hasta date,
   created_at timestamptz default now());
-create table paquetes (
+create table if not exists public.paquetes (
   id bigint generated always as identity primary key,
   nombre text not null, loc text, precio text, cupo text, icono text default 'umbrella',
   salida date, regreso date);
-create table reservas (
+create table if not exists public.reservas (
   id bigint generated always as identity primary key,
   codigo text unique not null, cliente text, paquete text, pax int,
   fecha_viaje date, asesor text, tono text default 'info', estado text default 'En proceso');
-create table pagos (
+create table if not exists public.pagos (
   id bigint generated always as identity primary key,
   recibo text unique not null, reserva text, cliente text, metodo text,
   valor text, fecha date, tono text default 'ok', estado text default 'Pagado');
-create table facturas (
+create table if not exists public.facturas (
   id bigint generated always as identity primary key,
   factura text unique not null, cliente text, nit text, reserva text,
   valor text, fecha date, tono text default 'info', estado text default 'Enviada');
-create table proveedores (
+create table if not exists public.proveedores (
   id bigint generated always as identity primary key,
   nombre text not null, tipo text, contacto text, convenio text,
   tono text default 'ok', estado text default 'Activo');
-create table empleados (
+create table if not exists public.empleados (
   id bigint generated always as identity primary key,
   codigo text unique not null, nombre text not null, cargo text,
   correo text, telefono text, activo boolean default true,
   observaciones text, obs_desde date, obs_hasta date);
 
-insert into clientes (codigo, nombre, documento, correo, telefono, reservas, activo, observaciones, obs_desde, obs_hasta) values
- ('CL-0031', 'Santiago Gómez', '70.189.704', 'santiago.gomez@mail.com', '310 130 2535', 3, true, 'Solicitó reembolso en un viaje anterior', '2026-11-24', '2026-12-04'),
- ('CL-0032', 'Mariana Naranjo', '92.765.818', 'mariana.naranjo@mail.com', '326 325 8359', 9, true, '', null, null),
- ('CL-0033', 'Samuel Restrepo', '98.444.204', 'samuel.restrepo@mail.com', '306 199 6881', 5, true, 'Canceló una reserva a última hora', '2026-03-07', '2026-06-09'),
- ('CL-0034', 'Renata Palacio', '69.227.487', 'renata.palacio@mail.com', '308 400 6925', 9, true, '', null, null),
- ('CL-0035', 'Daniela Álvarez', '13.489.384', 'daniela.alvarez@mail.com', '315 266 7065', 5, false, 'Reportó inconformidad con el hotel', '2026-02-28', '2026-04-28'),
- ('CL-0036', 'Nicolás Gil', '10.723.750', 'nicolas.gil@mail.com', '308 846 5010', 2, true, '', null, null),
- ('CL-0037', 'Emiliano Henao', '89.670.324', 'emiliano.henao@mail.com', '325 963 1916', 3, true, '', null, null),
- ('CL-0038', 'Laura Correa', '64.505.758', 'laura.correa@mail.com', '312 371 3287', 3, true, 'Requiere factura a nombre de empresa', '2026-04-21', '2026-12-11'),
- ('CL-0039', 'Miguel Cortés', '75.508.470', 'miguel.cortes@mail.com', '302 621 9085', 1, true, '', null, null),
- ('CL-0040', 'Andrés Ospina', '77.579.641', 'andres.ospina@mail.com', '318 981 1188', 1, true, 'Canceló una reserva a última hora', '2026-07-13', '2026-10-03'),
- ('CL-0041', 'Valeria Gil', '93.996.836', 'valeria.gil@mail.com', '318 880 3927', 8, true, 'Reportó inconformidad con el hotel', '2026-07-06', '2026-08-01'),
- ('CL-0042', 'Valentina Montoya', '26.256.482', 'valentina.montoya@mail.com', '308 897 9689', 0, true, '', null, null),
- ('CL-0043', 'Renata Correa', '73.180.187', 'renata.correa@mail.com', '327 935 2133', 8, true, 'VIP - atención prioritaria', '2026-01-08', '2026-05-08'),
- ('CL-0044', 'Camila Cardona', '22.371.640', 'camila.cardona@mail.com', '326 316 9835', 3, true, '', null, null),
- ('CL-0045', 'David Marín', '57.629.562', 'david.marin@mail.com', '303 330 2049', 5, true, '', null, null),
- ('CL-0046', 'Carlos Toro', '1.172.824', 'carlos.toro@mail.com', '320 334 2104', 0, true, '', null, null),
- ('CL-0047', 'Felipe Álvarez', '74.690.584', 'felipe.alvarez@mail.com', '307 926 7669', 3, true, 'Excelente historial de compras', '2026-03-24', '2026-04-18'),
- ('CL-0048', 'Valentina Ramírez', '53.578.984', 'valentina.ramirez@mail.com', '320 789 2612', 0, true, '', null, null),
- ('CL-0049', 'Tomás Duque', '55.287.385', 'tomas.duque@mail.com', '313 995 2235', 7, true, 'Prefiere contacto por WhatsApp', '2026-04-18', '2026-08-05'),
- ('CL-0050', 'Miguel Ramírez', '2.195.871', 'miguel.ramirez@mail.com', '302 516 8956', 7, false, '', null, null),
- ('CL-0051', 'Nicolás Marín', '55.813.848', 'nicolas.marin@mail.com', '327 258 4111', 4, true, 'Cliente puntual con los pagos', '2026-07-09', '2026-08-10'),
- ('CL-0052', 'Nicolás Vélez', '96.421.158', 'nicolas.velez@mail.com', '309 588 9238', 8, true, '', null, null),
- ('CL-0053', 'Isabella Vélez', '31.513.222', 'isabella.velez@mail.com', '323 692 1651', 9, true, 'Solicitó reembolso en un viaje anterior', '2026-02-20', '2026-02-22'),
- ('CL-0054', 'Juan Castaño', '41.367.309', 'juan.castano@mail.com', '325 344 5351', 6, true, '', null, null),
- ('CL-0055', 'Camila Montoya', '10.109.569', 'camila.montoya@mail.com', '329 202 2200', 8, true, '', null, null),
- ('CL-0056', 'Nicolás Naranjo', '9.350.478', 'nicolas.naranjo@mail.com', '312 548 9900', 4, true, '', null, null),
- ('CL-0057', 'Óscar Sánchez', '39.779.206', 'oscar.sanchez@mail.com', '304 218 2753', 8, false, '', null, null),
- ('CL-0058', 'Sebastián Gil', '34.617.600', 'sebastian.gil@mail.com', '310 194 7939', 4, true, 'VIP - atención prioritaria', '2026-04-22', '2026-11-28'),
- ('CL-0059', 'Laura Restrepo', '91.537.674', 'laura.restrepo@mail.com', '301 177 3442', 8, true, 'Reportó inconformidad con el hotel', '2026-03-24', '2026-08-18'),
- ('CL-0060', 'Laura Salazar', '6.466.315', 'laura.salazar@mail.com', '323 782 2684', 5, true, 'Solicitó reembolso en un viaje anterior', '2026-01-10', '2026-06-26'),
- ('CL-0061', 'Miguel Castaño', '31.985.266', 'miguel.castano@mail.com', '306 125 3938', 5, true, '', null, null),
- ('CL-0062', 'Luciana Mejía', '14.491.993', 'luciana.mejia@mail.com', '307 327 4269', 7, true, '', null, null),
- ('CL-0063', 'Antonia Montoya', '29.124.775', 'antonia.montoya@mail.com', '306 436 5564', 1, true, '', null, null),
- ('CL-0064', 'Samuel Agudelo', '69.439.128', 'samuel.agudelo@mail.com', '304 282 5349', 0, true, '', null, null),
- ('CL-0065', 'Valentina Serna', '41.546.720', 'valentina.serna@mail.com', '321 494 4114', 4, true, '', null, null);
+-- Compatibilidad con tablas creadas por versiones anteriores del proyecto.
+alter table public.clientes
+  add column if not exists activo boolean default true,
+  add column if not exists observaciones text,
+  add column if not exists obs_desde date,
+  add column if not exists obs_hasta date;
+alter table public.paquetes
+  add column if not exists salida date,
+  add column if not exists regreso date;
 
-insert into paquetes (nombre, loc, precio, cupo, icono, salida, regreso) values
- ('Cancún Paraíso', 'México · 7 días / 6 noches', '$ 6.480.000', 'Cupos: 15 / 20 · Todo incluido', 'umbrella', '2026-09-26', '2026-10-03'),
- ('Madrid Imperial', 'España · 8 días / 7 noches', '$ 9.120.000', 'Cupos: 14 / 40 · Con traslados', 'landmark', '2026-07-03', '2026-07-11'),
- ('San Andrés Mar', 'Colombia · 4 días / 3 noches', '$ 2.750.000', 'Cupos: 23 / 50 · City tour', 'waves', '2026-06-22', '2026-06-26'),
- ('Orlando Familiar', 'USA · 9 días / 8 noches', '$ 14.300.000', 'Cupos: 11 / 20 · City tour', 'ferriswheel', '2026-05-22', '2026-05-31'),
- ('Cusco Ancestral', 'Perú · 6 días / 5 noches', '$ 5.900.000', 'Cupos: 12 / 30 · Desayuno incluido', 'mountain', '2026-12-10', '2026-12-16'),
- ('París Romántico', 'Francia · 7 días / 6 noches', '$ 11.450.000', 'Cupos: 10 / 40 · Vuelo + hotel', 'building', '2026-07-22', '2026-07-29'),
- ('Punta Cana Caribe', 'Rep. Dominicana · 6 días / 5 noches', '$ 5.200.000', 'Cupos: 23 / 30 · Con seguro', 'umbrella', '2026-03-20', '2026-03-26'),
- ('Roma Clásica', 'Italia · 8 días / 7 noches', '$ 10.800.000', 'Cupos: 21 / 40 · Desayuno incluido', 'landmark', '2026-09-27', '2026-10-05'),
- ('Cartagena Colonial', 'Colombia · 4 días / 3 noches', '$ 1.980.000', 'Cupos: 11 / 20 · Con traslados', 'building', '2026-04-14', '2026-04-18'),
- ('Nueva York Urbano', 'USA · 7 días / 6 noches', '$ 12.600.000', 'Cupos: 40 / 40 · Con seguro', 'ferriswheel', '2026-06-15', '2026-06-22'),
- ('Londres Real', 'Reino Unido · 8 días / 7 noches', '$ 13.200.000', 'Cupos: 16 / 30 · Con seguro', 'landmark', '2026-04-17', '2026-04-25'),
- ('Río Carnaval', 'Brasil · 6 días / 5 noches', '$ 6.800.000', 'Cupos: 27 / 30 · Con seguro', 'waves', '2026-03-22', '2026-03-28'),
- ('Tokio Neón', 'Japón · 10 días / 9 noches', '$ 18.900.000', 'Cupos: 11 / 20 · City tour', 'building', '2026-11-21', '2026-12-01'),
- ('Santa Marta Tayrona', 'Colombia · 5 días / 4 noches', '$ 2.400.000', 'Cupos: 23 / 40 · Todo incluido', 'mountain', '2026-04-22', '2026-04-27'),
- ('Aruba Sol', 'Aruba · 6 días / 5 noches', '$ 5.600.000', 'Cupos: 9 / 25 · Vuelo + hotel', 'umbrella', '2026-03-01', '2026-03-07'),
- ('Barcelona Gaudí', 'España · 7 días / 6 noches', '$ 9.800.000', 'Cupos: 9 / 20 · Desayuno incluido', 'landmark', '2026-10-28', '2026-11-04'),
- ('Machu Picchu Trek', 'Perú · 7 días / 6 noches', '$ 7.100.000', 'Cupos: 16 / 20 · Desayuno incluido', 'mountain', '2026-11-19', '2026-11-26'),
- ('Miami Beach', 'USA · 6 días / 5 noches', '$ 7.900.000', 'Cupos: 24 / 24 · Con seguro', 'umbrella', '2026-07-16', '2026-07-22'),
- ('Ámsterdam Canales', 'Países Bajos · 7 días / 6 noches', '$ 10.200.000', 'Cupos: 9 / 30 · Vuelo + hotel', 'waves', '2026-11-23', '2026-11-30'),
- ('Dubái Lujo', 'EAU · 8 días / 7 noches', '$ 16.400.000', 'Cupos: 5 / 20 · Desayuno incluido', 'building', '2026-04-06', '2026-04-14'),
- ('Eje Cafetero', 'Colombia · 4 días / 3 noches', '$ 1.750.000', 'Cupos: 35 / 50 · Desayuno incluido', 'mountain', '2026-01-18', '2026-01-22'),
- ('Cancún Xcaret', 'México · 6 días / 5 noches', '$ 6.100.000', 'Cupos: 5 / 24 · Desayuno incluido', 'ferriswheel', '2026-03-26', '2026-04-01'),
- ('Praga Medieval', 'Chequia · 7 días / 6 noches', '$ 9.400.000', 'Cupos: 23 / 30 · City tour', 'landmark', '2026-09-20', '2026-09-27'),
- ('Bariloche Nieve', 'Argentina · 7 días / 6 noches', '$ 6.900.000', 'Cupos: 16 / 25 · City tour', 'mountain', '2026-12-17', '2026-12-24'),
- ('Grecia Islas', 'Grecia · 9 días / 8 noches', '$ 13.800.000', 'Cupos: 28 / 30 · City tour', 'waves', '2026-08-06', '2026-08-15'),
- ('Lisboa Atlántica', 'Portugal · 7 días / 6 noches', '$ 8.900.000', 'Cupos: 32 / 50 · Desayuno incluido', 'building', '2026-05-25', '2026-06-01'),
- ('Cancún Adults', 'México · 5 días / 4 noches', '$ 5.400.000', 'Cupos: 22 / 24 · Con traslados', 'umbrella', '2026-09-16', '2026-09-21'),
- ('Las Vegas Show', 'USA · 6 días / 5 noches', '$ 9.600.000', 'Cupos: 17 / 50 · Con traslados', 'ferriswheel', '2026-08-03', '2026-08-09'),
- ('Estambul Puente', 'Turquía · 8 días / 7 noches', '$ 11.200.000', 'Cupos: 20 / 50 · Vuelo + hotel', 'landmark', '2026-05-11', '2026-05-19'),
- ('Bora Bora Sueño', 'Polinesia · 9 días / 8 noches', '$ 24.500.000', 'Cupos: 19 / 25 · Todo incluido', 'waves', '2026-03-05', '2026-03-14'),
- ('Guatapé Piedra', 'Colombia · 3 días / 2 noches', '$ 1.250.000', 'Cupos: 14 / 24 · Con seguro', 'mountain', '2026-03-23', '2026-03-26'),
- ('Toronto Otoño', 'Canadá · 8 días / 7 noches', '$ 12.900.000', 'Cupos: 4 / 24 · Desayuno incluido', 'building', '2026-07-11', '2026-07-19'),
- ('Cancún Isla Mujeres', 'México · 6 días / 5 noches', '$ 6.300.000', 'Cupos: 31 / 40 · Desayuno incluido', 'waves', '2026-01-07', '2026-01-13'),
- ('Viena Musical', 'Austria · 7 días / 6 noches', '$ 10.600.000', 'Cupos: 14 / 30 · City tour', 'landmark', '2026-12-01', '2026-12-08'),
- ('Panamá Ciudad', 'Panamá · 5 días / 4 noches', '$ 4.300.000', 'Cupos: 26 / 40 · Desayuno incluido', 'building', '2026-01-12', '2026-01-17');
+insert into public.clientes (codigo,nombre,documento,correo,telefono,reservas,activo) values
+  ('CL-0033','Samuel Restrepo','98.444.204','samuel.restrepo@mail.com','306 199 6881',5,true),
+  ('CL-0039','Miguel Cortés','75.508.470','miguel.cortes@mail.com','302 621 9085',1,true),
+  ('CL-0048','Valentina Ramírez','53.578.984','valentina.ramirez@mail.com','320 789 2612',0,true),
+  ('CL-0050','Miguel Ramírez','2.195.871','miguel.ramirez@mail.com','302 516 8956',7,false),
+  ('CL-0051','Nicolás Marín','55.813.848','nicolas.marin@mail.com','327 258 4111',4,true),
+  ('CL-0055','Camila Montoya','10.109.569','camila.montoya@mail.com','329 202 2200',8,true),
+  ('CL-0060','Laura Salazar','6.466.315','laura.salazar@mail.com','323 782 2684',5,true)
+on conflict (codigo) do nothing;
 
-insert into reservas (codigo, cliente, paquete, pax, fecha_viaje, asesor, tono, estado) values
- ('#RS-20800', 'Miguel Ramírez', 'Grecia Islas', 5, '2026-12-24', 'Andrés M.', 'bad', 'Pendiente'),
- ('#RS-20801', 'David Marín', 'Toronto Otoño', 3, '2026-07-16', 'Samuel P.', 'warn', 'Pago parcial'),
- ('#RS-20802', 'Camila Montoya', 'Cancún Xcaret', 6, '2026-03-27', 'Juan J.', 'bad', 'Pendiente'),
- ('#RS-20803', 'Miguel Cortés', 'Panamá Ciudad', 4, '2026-10-19', 'Andrés M.', 'ok', 'Confirmada'),
- ('#RS-20804', 'Mariana Naranjo', 'París Romántico', 2, '2026-08-06', 'Samuel P.', 'bad', 'Pendiente'),
- ('#RS-20805', 'Felipe Álvarez', 'Grecia Islas', 2, '2026-08-11', 'Juan J.', 'info', 'En proceso'),
- ('#RS-20806', 'Camila Montoya', 'Miami Beach', 3, '2026-02-16', 'Samuel P.', 'bad', 'Pendiente'),
- ('#RS-20807', 'Valentina Serna', 'Orlando Familiar', 2, '2026-11-03', 'Andrés M.', 'info', 'En proceso'),
- ('#RS-20808', 'Samuel Restrepo', 'Madrid Imperial', 2, '2026-01-20', 'Samuel P.', 'warn', 'Pago parcial'),
- ('#RS-20809', 'Carlos Toro', 'Cartagena Colonial', 6, '2026-02-19', 'Samuel P.', 'bad', 'Pendiente'),
- ('#RS-20810', 'Laura Salazar', 'Machu Picchu Trek', 2, '2026-10-20', 'Andrés M.', 'info', 'En proceso'),
- ('#RS-20811', 'Laura Correa', 'Londres Real', 1, '2026-10-01', 'Juan J.', 'info', 'En proceso'),
- ('#RS-20812', 'Camila Montoya', 'Lisboa Atlántica', 1, '2026-10-23', 'Andrés M.', 'warn', 'Pago parcial'),
- ('#RS-20813', 'Carlos Toro', 'Punta Cana Caribe', 6, '2026-10-26', 'Samuel P.', 'info', 'En proceso'),
- ('#RS-20814', 'Samuel Restrepo', 'Praga Medieval', 4, '2026-11-12', 'Samuel P.', 'ok', 'Confirmada'),
- ('#RS-20815', 'Antonia Montoya', 'Cancún Xcaret', 4, '2026-08-04', 'Juan J.', 'ok', 'Confirmada'),
- ('#RS-20816', 'Juan Castaño', 'Bora Bora Sueño', 4, '2026-03-24', 'Andrés M.', 'warn', 'Pago parcial'),
- ('#RS-20817', 'Valentina Ramírez', 'Panamá Ciudad', 4, '2026-07-27', 'Andrés M.', 'bad', 'Pendiente'),
- ('#RS-20818', 'Valentina Ramírez', 'Eje Cafetero', 1, '2026-05-15', 'Samuel P.', 'warn', 'Pago parcial'),
- ('#RS-20819', 'Laura Salazar', 'Grecia Islas', 1, '2026-08-28', 'Juan J.', 'info', 'En proceso'),
- ('#RS-20820', 'Valentina Montoya', 'Toronto Otoño', 3, '2026-05-11', 'Juan J.', 'warn', 'Pago parcial'),
- ('#RS-20821', 'Valentina Ramírez', 'Cancún Paraíso', 2, '2026-02-08', 'Andrés M.', 'ok', 'Confirmada'),
- ('#RS-20822', 'Óscar Sánchez', 'Toronto Otoño', 2, '2026-12-16', 'Andrés M.', 'ok', 'Confirmada'),
- ('#RS-20823', 'Luciana Mejía', 'Estambul Puente', 1, '2026-05-08', 'Juan J.', 'ok', 'Confirmada'),
- ('#RS-20824', 'Carlos Toro', 'Dubái Lujo', 3, '2026-08-18', 'Andrés M.', 'ok', 'Confirmada'),
- ('#RS-20825', 'Isabella Vélez', 'Las Vegas Show', 3, '2026-06-23', 'Juan J.', 'ok', 'Confirmada'),
- ('#RS-20826', 'Valentina Ramírez', 'Dubái Lujo', 2, '2026-02-24', 'Samuel P.', 'info', 'En proceso'),
- ('#RS-20827', 'Nicolás Marín', 'Roma Clásica', 6, '2026-03-07', 'Samuel P.', 'ok', 'Confirmada'),
- ('#RS-20828', 'Miguel Castaño', 'Miami Beach', 5, '2026-10-10', 'Samuel P.', 'ok', 'Confirmada'),
- ('#RS-20829', 'Renata Correa', 'Ámsterdam Canales', 3, '2026-03-10', 'Samuel P.', 'warn', 'Pago parcial'),
- ('#RS-20830', 'Valentina Serna', 'Cartagena Colonial', 1, '2026-01-18', 'Juan J.', 'info', 'En proceso'),
- ('#RS-20831', 'Miguel Cortés', 'Toronto Otoño', 1, '2026-10-10', 'Juan J.', 'ok', 'Confirmada'),
- ('#RS-20832', 'Miguel Castaño', 'Estambul Puente', 2, '2026-01-09', 'Juan J.', 'info', 'En proceso'),
- ('#RS-20833', 'Laura Correa', 'Cusco Ancestral', 4, '2026-02-19', 'Andrés M.', 'bad', 'Pendiente'),
- ('#RS-20834', 'Renata Palacio', 'Nueva York Urbano', 5, '2026-05-03', 'Samuel P.', 'warn', 'Pago parcial');
+insert into public.paquetes (nombre,loc,precio,cupo,icono,salida,regreso)
+select nombre,loc,precio,cupo,icono,salida::date,regreso::date from (values
+  ('Cancún Paraíso','México · 7 días / 6 noches','$ 6.480.000','Cupos: 15 / 20 · Todo incluido','umbrella','2026-09-26','2026-10-03'),
+  ('Madrid Imperial','España · 8 días / 7 noches','$ 9.120.000','Cupos: 14 / 40 · Con traslados','landmark','2026-07-03','2026-07-11'),
+  ('Orlando Familiar','USA · 9 días / 8 noches','$ 14.300.000','Cupos: 11 / 20 · City tour','ferriswheel','2026-05-22','2026-05-31'),
+  ('Roma Clásica','Italia · 8 días / 7 noches','$ 10.800.000','Cupos: 21 / 40 · Desayuno incluido','landmark','2026-09-27','2026-10-05'),
+  ('Grecia Islas','Grecia · 9 días / 8 noches','$ 13.800.000','Cupos: 28 / 30 · City tour','waves','2026-08-06','2026-08-15'),
+  ('Lisboa Atlántica','Portugal · 7 días / 6 noches','$ 8.900.000','Cupos: 32 / 50 · Desayuno incluido','building','2026-05-25','2026-06-01'),
+  ('Panamá Ciudad','Panamá · 5 días / 4 noches','$ 4.300.000','Cupos: 26 / 40 · Desayuno incluido','building','2026-01-12','2026-01-17')
+) as muestra(nombre,loc,precio,cupo,icono,salida,regreso)
+where not exists (select 1 from public.paquetes p where p.nombre = muestra.nombre);
 
-insert into pagos (recibo, reserva, cliente, metodo, valor, fecha, tono, estado) values
- ('#PG-9800', '#RS-20807', 'Valentina Serna', 'Nequi', '$ 5.600.000', '2026-09-13', 'warn', 'Abono'),
- ('#PG-9801', '#RS-20828', 'Miguel Castaño', 'PSE', '$ 9.600.000', '2026-05-19', 'warn', 'Abono'),
- ('#PG-9802', '#RS-20803', 'Miguel Cortés', 'Transferencia', '$ 2.400.000', '2026-05-22', 'ok', 'Pagado'),
- ('#PG-9803', '#RS-20805', 'Felipe Álvarez', 'Transferencia', '$ 6.800.000', '2026-09-03', 'warn', 'Abono 50%'),
- ('#PG-9804', '#RS-20810', 'Laura Salazar', 'Efectivo', '$ 11.200.000', '2026-12-20', 'ok', 'Pagado'),
- ('#PG-9805', '#RS-20830', 'Valentina Serna', 'Tarjeta crédito', '$ 5.600.000', '2026-05-23', 'ok', 'Pagado'),
- ('#PG-9806', '#RS-20818', 'Valentina Ramírez', 'Tarjeta crédito', '$ 5.600.000', '2026-05-26', 'warn', 'Abono'),
- ('#PG-9807', '#RS-20812', 'Camila Montoya', 'Tarjeta crédito', '$ 4.300.000', '2026-04-21', 'warn', 'Abono'),
- ('#PG-9808', '#RS-20809', 'Carlos Toro', 'Transferencia', '$ 5.900.000', '2026-01-06', 'ok', 'Pagado'),
- ('#PG-9809', '#RS-20819', 'Laura Salazar', 'Efectivo', '$ 10.800.000', '2026-08-23', 'ok', 'Pagado'),
- ('#PG-9810', '#RS-20819', 'Laura Salazar', 'PSE', '$ 6.300.000', '2026-09-16', 'warn', 'Abono'),
- ('#PG-9811', '#RS-20828', 'Miguel Castaño', 'Nequi', '$ 2.750.000', '2026-07-24', 'ok', 'Pagado'),
- ('#PG-9812', '#RS-20820', 'Valentina Montoya', 'Tarjeta crédito', '$ 11.450.000', '2026-04-22', 'ok', 'Pagado'),
- ('#PG-9813', '#RS-20801', 'David Marín', 'Nequi', '$ 2.750.000', '2026-03-16', 'ok', 'Pagado'),
- ('#PG-9814', '#RS-20833', 'Laura Correa', 'PSE', '$ 6.800.000', '2026-10-14', 'warn', 'Abono'),
- ('#PG-9815', '#RS-20831', 'Miguel Cortés', 'Efectivo', '$ 9.400.000', '2026-07-11', 'ok', 'Pagado'),
- ('#PG-9816', '#RS-20820', 'Valentina Montoya', 'Transferencia', '$ 6.100.000', '2026-07-23', 'ok', 'Pagado'),
- ('#PG-9817', '#RS-20831', 'Miguel Cortés', 'Efectivo', '$ 2.750.000', '2026-08-03', 'ok', 'Pagado'),
- ('#PG-9818', '#RS-20820', 'Valentina Montoya', 'PSE', '$ 10.800.000', '2026-07-28', 'ok', 'Pagado'),
- ('#PG-9819', '#RS-20832', 'Miguel Castaño', 'Nequi', '$ 24.500.000', '2026-07-02', 'ok', 'Pagado'),
- ('#PG-9820', '#RS-20812', 'Camila Montoya', 'Nequi', '$ 12.900.000', '2026-11-15', 'ok', 'Pagado'),
- ('#PG-9821', '#RS-20803', 'Miguel Cortés', 'PSE', '$ 1.980.000', '2026-05-15', 'warn', 'Abono 50%'),
- ('#PG-9822', '#RS-20831', 'Miguel Cortés', 'Tarjeta crédito', '$ 9.800.000', '2026-12-06', 'ok', 'Pagado'),
- ('#PG-9823', '#RS-20819', 'Laura Salazar', 'Nequi', '$ 5.400.000', '2026-02-08', 'ok', 'Pagado'),
- ('#PG-9824', '#RS-20807', 'Valentina Serna', 'Tarjeta crédito', '$ 12.600.000', '2026-08-23', 'warn', 'Abono'),
- ('#PG-9825', '#RS-20818', 'Valentina Ramírez', 'Efectivo', '$ 1.250.000', '2026-08-08', 'ok', 'Pagado'),
- ('#PG-9826', '#RS-20829', 'Renata Correa', 'Efectivo', '$ 18.900.000', '2026-10-17', 'warn', 'Abono 50%'),
- ('#PG-9827', '#RS-20808', 'Samuel Restrepo', 'PSE', '$ 5.400.000', '2026-06-26', 'ok', 'Pagado'),
- ('#PG-9828', '#RS-20832', 'Miguel Castaño', 'Tarjeta crédito', '$ 10.200.000', '2026-12-10', 'ok', 'Pagado'),
- ('#PG-9829', '#RS-20831', 'Miguel Cortés', 'Efectivo', '$ 4.300.000', '2026-08-12', 'warn', 'Abono 50%'),
- ('#PG-9830', '#RS-20821', 'Valentina Ramírez', 'Efectivo', '$ 1.750.000', '2026-04-23', 'warn', 'Abono'),
- ('#PG-9831', '#RS-20815', 'Antonia Montoya', 'Transferencia', '$ 5.400.000', '2026-01-11', 'warn', 'Abono'),
- ('#PG-9832', '#RS-20830', 'Valentina Serna', 'Efectivo', '$ 12.600.000', '2026-08-02', 'warn', 'Abono'),
- ('#PG-9833', '#RS-20808', 'Samuel Restrepo', 'Tarjeta crédito', '$ 11.200.000', '2026-02-17', 'ok', 'Pagado'),
- ('#PG-9834', '#RS-20829', 'Renata Correa', 'Transferencia', '$ 5.400.000', '2026-11-05', 'ok', 'Pagado');
+insert into public.reservas (codigo,cliente,paquete,pax,fecha_viaje,asesor,tono,estado) values
+  ('#RS-20800','Miguel Ramírez','Grecia Islas',5,'2026-12-24','Andrés M.','bad','Pendiente'),
+  ('#RS-20803','Miguel Cortés','Panamá Ciudad',4,'2026-10-19','Andrés M.','ok','Confirmada'),
+  ('#RS-20808','Samuel Restrepo','Madrid Imperial',2,'2026-01-20','Samuel P.','warn','Pago parcial'),
+  ('#RS-20812','Camila Montoya','Lisboa Atlántica',1,'2026-10-23','Andrés M.','warn','Pago parcial'),
+  ('#RS-20819','Laura Salazar','Grecia Islas',1,'2026-08-28','Juan J.','info','En proceso'),
+  ('#RS-20821','Valentina Ramírez','Cancún Paraíso',2,'2026-02-08','Andrés M.','ok','Confirmada'),
+  ('#RS-20827','Nicolás Marín','Roma Clásica',6,'2026-03-07','Samuel P.','ok','Confirmada')
+on conflict (codigo) do nothing;
 
-insert into facturas (factura, cliente, nit, reserva, valor, fecha, tono, estado) values
- ('FE-004820', 'Daniela Álvarez', '13.489.384', '#RS-20830', '$ 6.100.000', '2026-10-23', 'info', 'Enviada'),
- ('FE-004821', 'Nicolás Naranjo', '9.350.478', '#RS-20805', '$ 4.300.000', '2026-07-11', 'info', 'Enviada'),
- ('FE-004822', 'Luciana Mejía', '14.491.993', '#RS-20834', '$ 5.900.000', '2026-04-21', 'ok', 'Aceptada'),
- ('FE-004823', 'Tomás Duque', '55.287.385', '#RS-20814', '$ 9.600.000', '2026-02-25', 'ok', 'Aceptada'),
- ('FE-004824', 'Emiliano Henao', '89.670.324', '#RS-20828', '$ 16.400.000', '2026-01-02', 'ok', 'Aceptada'),
- ('FE-004825', 'Nicolás Marín', '55.813.848', '#RS-20803', '$ 9.400.000', '2026-06-14', 'info', 'Enviada'),
- ('FE-004826', 'Andrés Ospina', '77.579.641', '#RS-20815', '$ 6.800.000', '2026-03-06', 'warn', 'Por validar'),
- ('FE-004827', 'Nicolás Gil', '10.723.750', '#RS-20824', '$ 12.900.000', '2026-10-05', 'ok', 'Aceptada'),
- ('FE-004828', 'David Marín', '57.629.562', '#RS-20829', '$ 24.500.000', '2026-05-22', 'info', 'Enviada'),
- ('FE-004829', 'Santiago Gómez', '70.189.704', '#RS-20829', '$ 4.300.000', '2026-03-03', 'info', 'Enviada'),
- ('FE-004830', 'Laura Restrepo', '91.537.674', '#RS-20822', '$ 9.600.000', '2026-12-09', 'info', 'Enviada'),
- ('FE-004831', 'Laura Salazar', '6.466.315', '#RS-20819', '$ 13.800.000', '2026-08-04', 'ok', 'Aceptada'),
- ('FE-004832', 'Carlos Toro', '1.172.824', '#RS-20824', '$ 10.200.000', '2026-12-10', 'info', 'Enviada'),
- ('FE-004833', 'Mariana Naranjo', '92.765.818', '#RS-20825', '$ 6.480.000', '2026-10-28', 'info', 'Enviada'),
- ('FE-004834', 'Renata Palacio', '69.227.487', '#RS-20831', '$ 5.600.000', '2026-10-26', 'info', 'Enviada'),
- ('FE-004835', 'Isabella Vélez', '31.513.222', '#RS-20814', '$ 7.100.000', '2026-11-25', 'ok', 'Aceptada'),
- ('FE-004836', 'Miguel Cortés', '75.508.470', '#RS-20806', '$ 16.400.000', '2026-08-02', 'ok', 'Aceptada'),
- ('FE-004837', 'Juan Castaño', '41.367.309', '#RS-20808', '$ 10.200.000', '2026-06-24', 'ok', 'Aceptada'),
- ('FE-004838', 'Óscar Sánchez', '39.779.206', '#RS-20811', '$ 1.980.000', '2026-09-12', 'ok', 'Aceptada'),
- ('FE-004839', 'Samuel Agudelo', '69.439.128', '#RS-20832', '$ 13.200.000', '2026-05-27', 'info', 'Enviada'),
- ('FE-004840', 'Miguel Castaño', '31.985.266', '#RS-20818', '$ 10.800.000', '2026-08-03', 'info', 'Enviada'),
- ('FE-004841', 'Andrés Ospina', '77.579.641', '#RS-20814', '$ 6.900.000', '2026-02-26', 'warn', 'Por validar'),
- ('FE-004842', 'Nicolás Naranjo', '9.350.478', '#RS-20800', '$ 4.300.000', '2026-02-15', 'info', 'Enviada'),
- ('FE-004843', 'Juan Castaño', '41.367.309', '#RS-20816', '$ 6.900.000', '2026-02-22', 'warn', 'Por validar'),
- ('FE-004844', 'David Marín', '57.629.562', '#RS-20830', '$ 1.750.000', '2026-10-08', 'ok', 'Aceptada'),
- ('FE-004845', 'Daniela Álvarez', '13.489.384', '#RS-20829', '$ 5.400.000', '2026-02-05', 'info', 'Enviada'),
- ('FE-004846', 'Samuel Restrepo', '98.444.204', '#RS-20802', '$ 12.900.000', '2026-02-04', 'info', 'Enviada'),
- ('FE-004847', 'Carlos Toro', '1.172.824', '#RS-20834', '$ 13.800.000', '2026-08-12', 'ok', 'Aceptada'),
- ('FE-004848', 'Valentina Serna', '41.546.720', '#RS-20826', '$ 5.400.000', '2026-11-04', 'ok', 'Aceptada'),
- ('FE-004849', 'Luciana Mejía', '14.491.993', '#RS-20826', '$ 2.750.000', '2026-12-12', 'info', 'Enviada'),
- ('FE-004850', 'Camila Cardona', '22.371.640', '#RS-20828', '$ 9.800.000', '2026-06-04', 'warn', 'Por validar'),
- ('FE-004851', 'Juan Castaño', '41.367.309', '#RS-20834', '$ 14.300.000', '2026-07-09', 'info', 'Enviada'),
- ('FE-004852', 'Renata Correa', '73.180.187', '#RS-20807', '$ 11.450.000', '2026-11-07', 'warn', 'Por validar'),
- ('FE-004853', 'Mariana Naranjo', '92.765.818', '#RS-20803', '$ 9.800.000', '2026-03-26', 'info', 'Enviada'),
- ('FE-004854', 'Camila Cardona', '22.371.640', '#RS-20804', '$ 2.400.000', '2026-04-11', 'ok', 'Aceptada');
+insert into public.pagos (recibo,reserva,cliente,metodo,valor,fecha,tono,estado) values
+  ('#PG-9802','#RS-20803','Miguel Cortés','Transferencia','$ 2.400.000','2026-05-22','warn','Abono'),
+  ('#PG-9807','#RS-20812','Camila Montoya','Tarjeta crédito','$ 4.300.000','2026-04-21','warn','Abono'),
+  ('#PG-9809','#RS-20819','Laura Salazar','Efectivo','$ 10.800.000','2026-08-23','warn','Abono')
+on conflict (recibo) do nothing;
 
-insert into proveedores (nombre, tipo, contacto, convenio, tono, estado) values
- ('Avianca', 'Aerolínea', 'contacto@avianca.com', 'Cupo garantizado', 'ok', 'Activo'),
- ('Decameron', 'Hotelería', 'contacto@decameron.com', 'Comisión 10%', 'ok', 'Activo'),
- ('LATAM Airlines', 'Aerolínea', 'contacto@latam.com', 'Comisión 8%', 'ok', 'Activo'),
- ('Meliá Hotels', 'Hotelería', 'contacto@meliá.com', 'Comisión 8%', 'warn', 'En revisión'),
- ('ExpediTours', 'Operador terrestre', 'contacto@expeditours.com', 'Por servicio', 'ok', 'Activo'),
- ('Wingo', 'Aerolínea', 'contacto@wingo.com', 'Comisión 8%', 'ok', 'Activo'),
- ('Copa Airlines', 'Aerolínea', 'contacto@copa.com', 'Comisión 10%', 'ok', 'Activo'),
- ('Hilton', 'Hotelería', 'contacto@hilton.com', 'Cupo garantizado', 'ok', 'Activo'),
- ('Marriott', 'Hotelería', 'contacto@marriott.com', 'Comisión 6%', 'warn', 'En revisión'),
- ('Iberia', 'Aerolínea', 'contacto@iberia.com', 'Comisión 10%', 'ok', 'Activo'),
- ('Air France', 'Aerolínea', 'contacto@air.com', 'Comisión 8%', 'ok', 'Activo'),
- ('Sheraton', 'Hotelería', 'contacto@sheraton.com', 'Cupo garantizado', 'info', 'Nuevo'),
- ('GHL Hoteles', 'Hotelería', 'contacto@ghl.com', 'Por servicio', 'ok', 'Activo'),
- ('Estelar Hoteles', 'Hotelería', 'contacto@estelar.com', 'Tarifa neta', 'ok', 'Activo'),
- ('Viva Air', 'Aerolínea', 'contacto@viva.com', 'Comisión 10%', 'info', 'Nuevo'),
- ('JetSMART', 'Aerolínea', 'contacto@jetsmart.com', 'Tarifa neta', 'ok', 'Activo'),
- ('Emirates', 'Aerolínea', 'contacto@emirates.com', 'Cupo garantizado', 'ok', 'Activo'),
- ('Delta', 'Aerolínea', 'contacto@delta.com', 'Por servicio', 'ok', 'Activo'),
- ('American Airlines', 'Aerolínea', 'contacto@american.com', 'Tarifa neta', 'warn', 'En revisión'),
- ('NH Hotels', 'Hotelería', 'contacto@nh.com', 'Comisión 6%', 'ok', 'Activo'),
- ('Radisson', 'Hotelería', 'contacto@radisson.com', 'Tarifa neta', 'info', 'Nuevo'),
- ('Movich Hoteles', 'Hotelería', 'contacto@movich.com', 'Por servicio', 'info', 'Nuevo'),
- ('Dann Hoteles', 'Hotelería', 'contacto@dann.com', 'Tarifa neta', 'ok', 'Activo'),
- ('Sirenis', 'Hotelería', 'contacto@sirenis.com', 'Comisión 6%', 'info', 'Nuevo'),
- ('Barcelo', 'Hotelería', 'contacto@barcelo.com', 'Comisión 10%', 'ok', 'Activo'),
- ('RIU Hotels', 'Hotelería', 'contacto@riu.com', 'Comisión 6%', 'ok', 'Activo'),
- ('Palladium', 'Hotelería', 'contacto@palladium.com', 'Comisión 10%', 'ok', 'Activo'),
- ('Aviatur Ops', 'Operador terrestre', 'contacto@aviatur.com', 'Tarifa neta', 'warn', 'En revisión'),
- ('Colombian Tours', 'Operador terrestre', 'contacto@colombian.com', 'Tarifa neta', 'warn', 'En revisión'),
- ('Andes Travel', 'Operador terrestre', 'contacto@andes.com', 'Comisión 6%', 'info', 'Nuevo'),
- ('Caribe DMC', 'Operador terrestre', 'contacto@caribe.com', 'Por servicio', 'ok', 'Activo'),
- ('Europa Tours', 'Operador terrestre', 'contacto@europa.com', 'Tarifa neta', 'ok', 'Activo'),
- ('Panorama', 'Operador terrestre', 'contacto@panorama.com', 'Comisión 8%', 'info', 'Nuevo'),
- ('GlobalBus', 'Operador terrestre', 'contacto@globalbus.com', 'Comisión 10%', 'info', 'Nuevo'),
- ('MarSol Cruceros', 'Naviera', 'contacto@marsol.com', 'Tarifa neta', 'info', 'Nuevo');
+insert into public.facturas (factura,cliente,nit,reserva,valor,fecha,tono,estado) values
+  ('FE-004825','Miguel Cortés','75.508.470','#RS-20803','$ 4.300.000','2026-06-14','info','Enviada'),
+  ('FE-004831','Laura Salazar','6.466.315','#RS-20819','$ 13.800.000','2026-08-04','ok','Aceptada'),
+  ('FE-004837','Samuel Restrepo','98.444.204','#RS-20808','$ 9.120.000','2026-06-24','warn','Por validar'),
+  ('FE-004842','Miguel Ramírez','2.195.871','#RS-20800','$ 13.800.000','2026-02-15','info','Enviada')
+on conflict (factura) do nothing;
 
-insert into empleados (codigo, nombre, cargo, correo, telefono, activo, observaciones, obs_desde, obs_hasta) values
- ('EM-0101', 'Samuel Parra', 'Asesor comercial', 'samuel.parra@novatravel.com', '305 537 6120', true, '', null, null),
- ('EM-0102', 'Juan José García', 'Asesor comercial', 'juan.jose.garcia@novatravel.com', '312 803 8770', true, '', null, null),
- ('EM-0103', 'Andrés Martínez', 'Asesor comercial', 'andres.martinez@novatravel.com', '301 542 2582', false, '', null, null),
- ('EM-0104', 'Carolina Ospina', 'Gerente general', 'carolina.ospina@novatravel.com', '312 669 1982', true, '', null, null),
- ('EM-0105', 'Diego Herrera', 'Contador', 'diego.herrera@novatravel.com', '306 462 7929', true, 'Vacaciones programadas en julio', '2026-06-22', '2026-09-18'),
- ('EM-0106', 'Lucía Mesa', 'Soporte al cliente', 'lucia.mesa@novatravel.com', '315 206 9313', true, 'En periodo de prueba', '2026-05-20', '2026-12-02'),
- ('EM-0107', 'Ricardo Peña', 'Coordinador de viajes', 'ricardo.pena@novatravel.com', '305 965 7022', true, 'Excelente desempeño trimestral', '2026-04-28', '2026-11-16'),
- ('EM-0108', 'Natalia Quintero', 'Asesor comercial', 'natalia.quintero@novatravel.com', '319 331 8030', true, '', null, null),
- ('EM-0109', 'Felipe Osorio', 'Soporte al cliente', 'felipe.osorio@novatravel.com', '328 126 5381', false, 'Retirado por reestructuración', '2026-09-25', '2026-10-20'),
- ('EM-0110', 'Marcela Ruiz', 'Contadora', 'marcela.ruiz@novatravel.com', '314 447 6751', false, '', null, null),
- ('EM-0111', 'Julián Cano', 'Asesor comercial', 'julian.cano@novatravel.com', '302 858 1502', false, 'Bajo desempeño reportado', '2026-03-19', '2026-11-13'),
- ('EM-0112', 'Paola Restrepo', 'Coordinadora de viajes', 'paola.restrepo@novatravel.com', '323 485 7878', false, '', null, null),
- ('EM-0113', 'Camilo Arboleda', 'Asesor comercial', 'camilo.arboleda@novatravel.com', '319 710 2391', true, 'Licencia de maternidad', '2026-03-12', '2026-05-24'),
- ('EM-0114', 'Verónica Lozano', 'Recursos humanos', 'veronica.lozano@novatravel.com', '302 872 1815', true, '', null, null),
- ('EM-0115', 'Esteban Gil', 'Asesor comercial', 'esteban.gil@novatravel.com', '326 597 8242', false, 'Amonestación por retrasos', '2026-05-15', '2026-11-03');
+insert into public.proveedores (nombre,tipo,contacto,convenio,tono,estado)
+select nombre,tipo,contacto,convenio,tono,estado from (values
+  ('Avianca','Aerolínea','contacto@avianca.com','Cupo garantizado','ok','Activo'),
+  ('Decameron','Hotelería','contacto@decameron.com','Comisión 10%','ok','Activo'),
+  ('LATAM Airlines','Aerolínea','contacto@latam.com','Comisión 8%','ok','Activo'),
+  ('ExpediTours','Operador terrestre','contacto@expeditours.com','Por servicio','ok','Activo'),
+  ('Hilton','Hotelería','contacto@hilton.com','Cupo garantizado','ok','Activo'),
+  ('Iberia','Aerolínea','contacto@iberia.com','Comisión 10%','ok','Activo'),
+  ('MarSol Cruceros','Naviera','contacto@marsol.com','Tarifa neta','info','Nuevo')
+) as muestra(nombre,tipo,contacto,convenio,tono,estado)
+where not exists (select 1 from public.proveedores p where p.nombre = muestra.nombre);
 
+insert into public.empleados (codigo,nombre,cargo,correo,telefono,activo) values
+  ('EM-0101','Samuel Parra','Asesor comercial','samuel.parra@novatravel.com','305 537 6120',true),
+  ('EM-0102','Juan José García','Asesor comercial','juan.jose.garcia@novatravel.com','312 803 8770',true),
+  ('EM-0104','Carolina Ospina','Gerente general','carolina.ospina@novatravel.com','312 669 1982',true)
+on conflict (codigo) do nothing;
+
+-- Compatibilidad de instalación demo inicial. Una instalación con perfiles o
+-- evidencia de la migración de accesos NUNCA debe volver a políticas anónimas.
+-- También limpia demo_all residual sin reemplazar las políticas autenticadas.
 do $$
-declare t text;
+declare
+  tabla text;
+  accesos_protegidos boolean :=
+    to_regclass('public.perfiles') is not null
+    or to_regclass('privado.provisiones_acceso') is not null
+    or to_regprocedure('public.obtener_perfil()') is not null;
+  migracion_registrada boolean := false;
 begin
-  foreach t in array array['clientes','paquetes','reservas','pagos','facturas','proveedores','empleados']
-  loop
-    execute format('alter table %I enable row level security;', t);
-    execute format('drop policy if exists "demo_all" on %I;', t);
-    execute format('create policy "demo_all" on %I for all to anon using (true) with check (true);', t);
+  if to_regclass('supabase_migrations.schema_migrations') is not null then
+    execute 'select exists (select 1 from supabase_migrations.schema_migrations where version = $1)'
+      into migracion_registrada using '20261022233614';
+  end if;
+  accesos_protegidos := accesos_protegidos or migracion_registrada;
+  foreach tabla in array array['clientes','paquetes','reservas','pagos','facturas','proveedores','empleados'] loop
+    execute format('alter table public.%I enable row level security', tabla);
+    execute format('drop policy if exists "demo_all" on public.%I', tabla);
+    if accesos_protegidos then
+      execute format('revoke all on public.%I from public, anon', tabla);
+    else
+      execute format('create policy "demo_all" on public.%I for all to anon using (true) with check (true)', tabla);
+    end if;
   end loop;
 end $$;

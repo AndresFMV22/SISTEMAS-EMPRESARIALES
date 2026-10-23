@@ -17,6 +17,9 @@ dist-ssr
 
 # Config local de herramientas
 .mcp.json
+.opencode/
+.agents/
+skills-lock.json
 supabase/.temp/
 .opencode/node_modules/
 .opencode/package.json

@@ -2,7 +2,7 @@
 
 ## Alcance implementado
 
-- `src/components/PuertaAcceso.jsx`: correo y contraseña mediante el contrato de
+- `src/components/autenticacion/PuertaAcceso.jsx`: correo y contraseña mediante el contrato de
   `autenticacion.js`, restauración por `INITIAL_SESSION`, validación de perfil,
   cierre de sesión y recuperación con respuesta no enumeradora.
 - El panel existente solo se monta para un perfil administrador autorizado. Un
@@ -36,7 +36,7 @@
 
 ## Empleados y accesos
 
-`src/components/GestionAccesosEmpleados.jsx` complementa la tabla existente con
+`src/components/administrador/GestionAccesosEmpleados.jsx` complementa la tabla existente con
 estado del empleado y acceso al sistema separados. Consulta, solo dentro del
 panel admin, `empleados.select('id,codigo,nombre,correo,activo')` y `listarAccesos()`.
 El código permite ubicar la fila heredada, pero **nunca** se usa como

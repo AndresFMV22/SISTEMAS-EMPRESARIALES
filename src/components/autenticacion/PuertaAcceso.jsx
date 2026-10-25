@@ -35,7 +35,7 @@ function retirarFlujo() {
   window.history.replaceState(null, "", direccion);
 }
 
-export default function PuertaAcceso({ panelAdministrador: PanelAdministrador, propiedadesPanel, controles }) {
+export default function PuertaAcceso({ panelAdministrador: PanelAdministrador, panelAsesor: PanelAsesor, propiedadesPanel, controles }) {
   const { t } = useIdioma();
   const [demo, cambiarDemo] = useState(false);
   const [estado, cambiarEstado] = useState({ cargando: supabaseConfigurado, sesion: null, perfil: null, error: "" });
@@ -130,6 +130,10 @@ export default function PuertaAcceso({ panelAdministrador: PanelAdministrador, p
   if (estado.perfil?.rol === "administrador" && !flujoContrasena) return <PanelAdministrador key={estado.perfil.id} {...propiedadesPanel} perfil={estado.perfil} alSalir={salir} validarAcceso={async () => {
     const perfil = await revalidar();
     if (perfil?.rol !== "administrador") throw new Error(t("acceso.bloqueado"));
+  }} />;
+  if (estado.perfil?.rol === "asesor" && !flujoContrasena) return <PanelAsesor key={estado.perfil.id} {...propiedadesPanel} perfil={estado.perfil} alSalir={salir} validarAcceso={async () => {
+    const perfil = await revalidar();
+    if (perfil?.rol !== "asesor" || perfil.id !== estado.perfil.id) throw new Error(t("acceso.bloqueado"));
   }} />;
 
   return <><div className="absolute right-4 top-4 z-20">{controles}</div><main className="relative z-10 flex min-h-screen items-center justify-center px-5 pb-32 pt-24">

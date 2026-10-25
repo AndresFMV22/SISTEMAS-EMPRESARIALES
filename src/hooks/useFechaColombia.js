@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fechaColombia } from "./paquetes";
+import { fechaColombia } from "@/lib/paquetes";
 
 // Actualiza el catálogo sin recargar al cambiar de día o volver a la pestaña.
 export function useFechaColombia() {

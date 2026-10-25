@@ -51,7 +51,8 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
   ideal para probar o presentar sin instalar nada. Un indicador en la barra superior
   muestra en qué modo está (**Base de datos** / **Datos demo**).
 
-> **Acceso de demostración** — Usuario: `admin` · Contraseña: `agencia2026`
+> **Acceso:** con Supabase, usa una cuenta real habilitada por rol. Sin configuración,
+> el botón **Explorar demostración** abre el panel administrativo con datos en memoria.
 
 ---
 
@@ -59,7 +60,7 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
 
 | Módulo | Qué hace |
 |--------|----------|
-| **Login** | Acceso interno con validación de credenciales. |
+| **Login** | Supabase Auth, recuperación de contraseña y entrada según rol administrador o asesor. |
 | **Resumen** | Indicadores de registros actuales, gráfico de pagos por mes, paquetes más reservados y **filtro de reservas por rango de fechas**. |
 | **Clientes** | Alta de clientes y, en lugar de borrar, **activar/desactivar** con **observaciones y vigencia (rango de fechas)** para no perder información valiosa. |
 | **Empleados** | Gestión del personal con la misma lógica de **activo/inactivo + observaciones** (útil ante retiros o despidos sin perder el histórico). |
@@ -109,9 +110,24 @@ cp .env.example .env.local      # luego completa la clave de Supabase
 npm run dev
 ```
 
-Abre **http://localhost:5173** e ingresa con `admin` / `agencia2026`.
+Abre **http://localhost:5173** e ingresa con el correo y la contraseña de tu cuenta
+habilitada. La preparación del primer administrador se describe en
+[`supabase/DESPLIEGUE_ACCESOS.md`](supabase/DESPLIEGUE_ACCESOS.md).
 
 > Si no configuras Supabase, la app igual arranca con **datos de demostración**.
+
+### Panel del asesor
+
+Incluye resumen, clientes e historial, catálogo de consulta, reservas propias y
+compartidas, abonos, comprobantes internos, observaciones, solicitudes y cuenta.
+Solo el responsable opera su reserva; el administrador atiende solicitudes y
+reasigna desde **Reservas → Gestión de reservas**. Las reservas nuevas del asesor
+guardan precio por persona, total y cupos en operaciones transaccionales.
+
+Antes de probarlo con cuentas reales, aplica la **nueva** migración indicada en
+[`ASESOR_SUPABASE.md`](ASESOR_SUPABASE.md). No vuelvas a ejecutar migraciones ya
+aplicadas ni el esquema base sobre un entorno configurado. El panel administrativo
+existente conserva sus operaciones históricas.
 
 ---
 
@@ -157,21 +173,34 @@ agencia-viajes-app/
 ├─ public/
 │  └─ logo-mark.png            # logo de la marca
 ├─ src/
-│  ├─ App.jsx                  # UI principal: login, dashboard y todos los módulos
+│  ├─ App.jsx                  # composición general, fondo, tema y acceso por rol
 │  ├─ index.css                # tema (tokens claro/oscuro) y estilos de efectos
+│  ├─ vistas/
+│  │  ├─ administrador/        # panel, resumen, clientes, empleados, reservas y finanzas
+│  │  └─ asesor/               # panel, resumen, clientes, reservas, pagos y cuenta
 │  ├─ components/
+│  │  ├─ administrador/        # formularios, tablas y gestión exclusivos del administrador
+│  │  ├─ asesor/               # formulario de reserva propio del asesor
+│  │  ├─ compartidos/          # panel visual, catálogo, detalle de reserva, dinero y controles
+│  │  ├─ autenticacion/        # entrada, recuperación y validación de sesión
 │  │  ├─ ui/                   # componentes shadcn/ui (button, card, table, dialog, select...)
 │  │  └─ reactbits/            # efectos: Cuadricula, TarjetaIluminada, TextoBrillante,
 │  │                           #          TextoDegradado, ChispasAlClic, ContadorAnimado, BordeBrillante
+│  ├─ hooks/                   # useAsesor, useTema y useFechaColombia
 │  └─ lib/
 │     ├─ supabase.js           # cliente de Supabase
 │     ├─ db.js                 # consultas, inserciones y actualizaciones
-│     ├─ demoData.js           # datos de demostración (fallback)
+│     ├─ asesor.js             # operaciones directas del asesor en Supabase
+│     ├─ demoData.js           # datos del modo demostración explícito
 │     └─ i18n.jsx              # traducciones y contexto de idioma
 ├─ supabase/
 │  └─ schema.sql               # esquema + datos de ejemplo + políticas RLS
 └─ .env.example                # plantilla de variables de entorno
 ```
+
+Las vistas reciben datos y acciones del panel de su rol. Los componentes privados
+se guardan bajo ese rol y las piezas utilizadas por ambos viven en `compartidos`.
+Esta organización no añade capas de repositorios ni cambia las operaciones de BD.
 
 ---
 

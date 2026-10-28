@@ -3,10 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import CampoDinero from "@/components/compartidos/CampoDinero";
 import { useIdioma } from "@/lib/i18n.jsx";
 import { mostrarDinero, leerDinero } from "@/lib/dinero";
-import { agregarObservacion, registrarAbonoAsesor, solicitarCambioReserva, resolverSolicitud, reasignarReserva, cambiarEstadoReserva } from "@/lib/asesor";
+import { agregarObservacion, registrarAbonoAsesor, solicitarCambioReserva, reasignarReserva, cambiarEstadoReserva, METODOS_PAGO } from "@/lib/asesor";
 import { estadoPaquete } from "@/lib/paquetes";
 import { useFechaColombia } from "@/hooks/useFechaColombia";
 import { CampoAsesor, FormularioOperacion, SeccionAsesor, TablaAsesor, EstadoAsesor, mismoId, perteneceReserva, saldoReserva, dineroOpcional } from "./FormulariosReserva";
+import ContenidoComercial from "./ContenidoComercial";
+import ResumenPrecio from "./ResumenPrecio";
+import ResolverSolicitudPrecio from "@/components/administrador/ResolverSolicitudPrecio";
+import { cumpleCondicionPromocion } from "@/lib/promociones";
 
 export default function DetalleReserva({ reserva, datos, perfil, ocupado, ejecutar, error, mensaje, alCerrar, administracion = false }) {
   const { t, idioma } = useIdioma();
@@ -32,12 +36,16 @@ export default function DetalleReserva({ reserva, datos, perfil, ocupado, ejecut
       <div className="space-y-5">
         <SeccionAsesor titulo={t("asesor.comprobante")}>
           <p className="text-xs text-muted-foreground">{t("asesor.noDian")}</p>
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">{[["col.cliente", reserva.cliente], ["col.paquete", reserva.paquete], ["col.asesor", reserva.asesor], ["col.pax", reserva.pax], ["pkg.salida", reserva.fecha_viaje], ["pkg.regreso", reserva.fecha_regreso], ["asesor.precioPersona", dineroOpcional(reserva.precio_persona)], ["pay.total", dineroOpcional(saldo.total)], ["pay.paid", mostrarDinero(saldo.pagado)], ["pay.saldo", dineroOpcional(saldo.saldo)]].map(([clave, valor]) => <div key={clave}><dt className="text-muted-foreground">{t(clave)}</dt><dd className="break-words font-semibold tabular-nums">{valor ?? "—"}</dd></div>)}</dl>
-          <div className="flex flex-wrap gap-3"><span className="text-sm">{t("col.estado")}: <EstadoAsesor estado={reserva.estado} /></span><span className="text-sm">{t("nav.pagos")}: <EstadoAsesor estado={reserva.estado_pago} /></span></div>
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">{[["col.cliente", reserva.cliente], ["col.paquete", reserva.paquete], ["col.asesor", reserva.asesor], ["col.pax", reserva.pax], ["pkg.salida", reserva.fecha_viaje], ["pkg.regreso", reserva.fecha_regreso], ["pay.paid", mostrarDinero(saldo.pagado)], ["pay.saldo", dineroOpcional(saldo.saldo)]].map(([clave, valor]) => <div key={clave}><dt className="text-muted-foreground">{t(clave)}</dt><dd className="break-words font-semibold tabular-nums">{valor ?? "—"}</dd></div>)}</dl>
+          <ResumenPrecio cotizacion={{ precio_persona: reserva.precio_persona, subtotal: reserva.precio_persona != null ? reserva.precio_persona * reserva.pax : saldo.total,
+            descuento: reserva.descuento || 0, total: saldo.total, promocion: reserva.promocion_contratada, aplica: cumpleCondicionPromocion(reserva.promocion_contratada, reserva.pax) }} />
+          <div className="flex flex-wrap gap-3"><span className="text-sm">{t("fases.estadoReserva")}: <EstadoAsesor estado={reserva.estado} tipo="reserva" /></span><span className="text-sm">{t("fases.estadoPago")}: <EstadoAsesor estado={reserva.estado_pago} tipo="pago" /></span></div>
+          <p className="text-xs text-muted-foreground">{t("fases.aclaracionEstados")}</p>
           {saldo.total == null && <p role="status" className="text-sm text-amber-600">{t("asesor.totalDesconocido")}</p>}
-          <TablaAsesor columnas={[t("asesor.recibo"), t("asesor.metodo"), t("asesor.valor"), t("col.fecha"), t("col.estado")]} filas={pagos.map((fila) => [fila.recibo, fila.metodo, mostrarDinero(fila.valor), fila.fecha, fila.estado])} />
-          {facturas.length > 0 && <><h3 className="text-sm font-semibold">{t("asesor.documentosInternos")}</h3><TablaAsesor columnas={[t("asesor.referencia"), t("asesor.valor"), t("col.fecha"), t("col.estado")]} filas={facturas.map((fila) => [fila.factura, mostrarDinero(fila.valor), fila.fecha, fila.estado])} /></>}
+          <TablaAsesor columnas={[t("asesor.recibo"), t("asesor.metodo"), t("asesor.valor"), t("col.fecha"), t("col.estado")]} filas={pagos.map((fila) => [fila.recibo, fila.metodo, mostrarDinero(fila.valor), fila.fecha, <EstadoAsesor key="estado" estado={fila.estado} tipo="pago" />])} />
+          {facturas.length > 0 && <><h3 className="text-sm font-semibold">{t("asesor.documentosInternos")}</h3><TablaAsesor columnas={[t("asesor.referencia"), t("asesor.valor"), t("col.fecha"), t("col.estado")]} filas={facturas.map((fila) => [fila.factura, mostrarDinero(fila.valor), fila.fecha, <EstadoAsesor key="estado" estado={fila.estado} />])} /></>}
         </SeccionAsesor>
+        <SeccionAsesor titulo={t("catalogo.contratado")}><ContenidoComercial contenido={reserva.contenido_contratado} contratado /></SeccionAsesor>
         {!gestionada ? <p role="status" className="text-sm text-amber-600">{t("asesor.historica")}</p> : !puedeOperar ? <p className="text-sm text-muted-foreground">{t("asesor.soloLectura")}</p> : cerrada ? <p className="text-sm text-muted-foreground">{t("asesor.cerrada")}</p> : null}
         {puedeOperar && !cerrada && saldo.saldo != null && saldo.saldo > 0 && <SeccionAsesor titulo={t("pay.title")}><FormularioOperacion ocupado={ocupado} etiqueta="btn.pay" alEnviar={async (valores) => {
           const valor = leerDinero(monto);
@@ -46,7 +54,7 @@ export default function DetalleReserva({ reserva, datos, perfil, ocupado, ejecut
           const resultado = await ejecutar(() => registrarAbonoAsesor({ reserva_id: reserva.id, valor, metodo: valores.metodo }));
           if (resultado) cambiarMonto("");
           return resultado;
-        }}><div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1.5"><label htmlFor="monto-abono" className="text-sm font-medium">{t("pay.amount")}</label><CampoDinero id="monto-abono" valor={monto} alCambiar={cambiarMonto} /><p className="text-xs text-muted-foreground">{t("pay.maxHint")} {mostrarDinero(saldo.saldo)}</p></div><CampoAsesor etiqueta={t("asesor.metodo")} name="metodo" required opciones={[["", t("asesor.seleccionar")], ...["Efectivo", "Transferencia", "Tarjeta crédito", "Tarjeta débito"].map((valor) => [valor, t(`asesor.metodo.${valor}`)])]} /></div></FormularioOperacion></SeccionAsesor>}
+        }}><div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1.5"><label htmlFor="monto-abono" className="text-sm font-medium">{t("pay.amount")}</label><CampoDinero id="monto-abono" valor={monto} alCambiar={cambiarMonto} /><p className="text-xs text-muted-foreground">{t("pay.maxHint")} {mostrarDinero(saldo.saldo)}</p></div><CampoAsesor etiqueta={t("asesor.metodo")} name="metodo" required opciones={[["", t("asesor.seleccionar")], ...METODOS_PAGO.map((valor) => [valor, t(`asesor.metodo.${valor}`)])]} /></div></FormularioOperacion></SeccionAsesor>}
         <SeccionAsesor titulo={t("col.observ")}>
           {datos.observaciones.filter((fila) => mismoId(fila.reserva_id, reserva.id)).map((fila) => <div key={fila.id} className="rounded-xl border border-border p-3 text-sm"><p className="whitespace-pre-wrap break-words">{fila.texto}</p><p className="mt-2 text-xs text-muted-foreground">{fila.autor_nombre} · {fechaTexto(fila.creado_en)}</p></div>)}
           {!datos.observaciones.some((fila) => mismoId(fila.reserva_id, reserva.id)) && <p className="text-sm text-muted-foreground">{t("empty")}</p>}
@@ -59,9 +67,8 @@ export default function DetalleReserva({ reserva, datos, perfil, ocupado, ejecut
             <p className="whitespace-pre-wrap break-words">{solicitud.motivo}</p><p className="text-xs text-muted-foreground">{solicitud.autor_nombre} · {fechaTexto(solicitud.creado_en)}</p>
             {solicitud.paquete_id != null && <p>{t("col.paquete")}: {datos.paquetes.find((fila) => mismoId(fila.id, solicitud.paquete_id))?.nombre || `ID ${solicitud.paquete_id}`}</p>}{solicitud.pax != null && <p>{t("col.pax")}: {solicitud.pax}</p>}
             {solicitud.respuesta && <p className="whitespace-pre-wrap break-words"><b>{t("asesor.respuesta")}:</b> {solicitud.respuesta}</p>}
-            {administracion && solicitud.estado === "pendiente" && <FormularioOperacion ocupado={ocupado} alEnviar={(valores) => ejecutar(() => resolverSolicitud({ solicitud_id: solicitud.id, aprobar: valores.decision === "aprobar", respuesta: valores.respuesta }))}>
-              <CampoAsesor etiqueta={t("asesor.respuesta")} name="respuesta" multilinea required /><CampoAsesor etiqueta={t("asesor.decision")} name="decision" required opciones={[["", t("asesor.seleccionar")], ...(!cerrada ? [["aprobar", t("asesor.aprobar")]] : []), ["rechazar", t("asesor.rechazar")]]} /><label className="flex items-start gap-2"><input type="checkbox" required className="mt-1" />{t("asesor.confirmarGestion")}</label>
-            </FormularioOperacion>}
+            {solicitud.cotizacion_aceptada && <details><summary className="cursor-pointer">{t("promos.cotizacionAceptada")}</summary><ResumenPrecio cotizacion={solicitud.cotizacion_aceptada} /></details>}
+            {administracion && solicitud.estado === "pendiente" && <ResolverSolicitudPrecio solicitud={solicitud} reserva={reserva} datos={datos} ocupado={ocupado} ejecutar={ejecutar} />}
           </div>)}
           {pendiente && <p role="status" className="text-sm text-amber-600">{t("asesor.pendiente")}</p>}
           {puedeOperar && !cerrada && !pendiente && <FormularioOperacion titulo={t("asesor.nuevaSolicitud")} ocupado={ocupado} alEnviar={(valores) => {
@@ -79,7 +86,7 @@ export default function DetalleReserva({ reserva, datos, perfil, ocupado, ejecut
           <FormularioOperacion titulo={t("asesor.reasignar")} ocupado={ocupado} alEnviar={(valores) => ejecutar(() => reasignarReserva({ reserva_id: reserva.id, empleado_id: datos.asesores.find((fila) => mismoId(fila.empleado_id, valores.empleado_id))?.empleado_id }))}>
             <CampoAsesor etiqueta={t("col.asesor")} name="empleado_id" required opciones={[["", t("asesor.seleccionar")], ...(datos.asesores || []).map((fila) => [fila.empleado_id, `${fila.nombre} · ${fila.correo}`])]} /><label className="flex items-start gap-2 text-sm"><input type="checkbox" required className="mt-1" />{t("asesor.confirmarGestion")}</label>
           </FormularioOperacion>
-          {!cerrada && <FormularioOperacion titulo={t("asesor.cambiarEstado")} ocupado={ocupado} alEnviar={(valores) => ejecutar(() => cambiarEstadoReserva({ reserva_id: reserva.id, estado: valores.estado }))}><CampoAsesor etiqueta={t("col.estado")} name="estado" required opciones={[["", t("asesor.seleccionar")], ...["Pendiente", "Confirmada", "Finalizada"].map((valor) => [valor, t(`asesor.estado.${valor}`)])]} /><label className="flex items-start gap-2 text-sm"><input type="checkbox" required className="mt-1" />{t("asesor.confirmarGestion")}</label></FormularioOperacion>}
+          {!cerrada && <FormularioOperacion titulo={t("asesor.cambiarEstado")} ocupado={ocupado} alEnviar={(valores) => ejecutar(() => cambiarEstadoReserva({ reserva_id: reserva.id, estado: valores.estado }))}><CampoAsesor etiqueta={t("fases.estadoReserva")} name="estado" required opciones={[["", t("asesor.seleccionar")], ...["Pendiente", "Confirmada", "Finalizada"].map((valor) => [valor, valor === "Pendiente" ? t("fases.pendienteConfirmacion") : t(`asesor.estado.${valor}`)])]} /><label className="flex items-start gap-2 text-sm"><input type="checkbox" required className="mt-1" />{t("asesor.confirmarGestion")}</label></FormularioOperacion>}
         </SeccionAsesor>}
       </div>
     </DialogContent>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import IndicadorEstado from "@/components/compartidos/IndicadorEstado";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase, supabaseConfigurado } from "@/lib/supabase";
 import { gestionarAcceso, listarAccesos } from "@/lib/autenticacion";
@@ -79,7 +79,7 @@ export default function GestionAccesosEmpleados({ empleados, validarAcceso, chil
     const esAsesor = !acceso || acceso.rol === "asesor";
     const acciones = !acceso ? ["invitar", "suspender"] : estado === "suspendido" ? ["reactivar"] : ["reenviar", "suspender", ...(acceso.id ? ["recuperar"] : [])];
     return <div className="min-w-40 space-y-2">
-      <Badge variant="outline" className={estado === "activo" ? "text-emerald-600" : estado === "suspendido" ? "text-rose-600" : "text-amber-600"}>{t(`acceso.${estado}`)}</Badge>
+      <IndicadorEstado estado={estado} etiqueta={t(`acceso.${estado}`)} />
       {esAsesor ? <div className="flex flex-wrap gap-1">{acciones.map((accion) => <Button key={accion} size="sm" variant="outline" disabled={ocupado || cargando || !!error || (accion !== "suspender" && (!empleado.activo || !fila[5] || !empleado.correo)) || (typeof empleado.id === "number" && !Number.isSafeInteger(empleado.id))} onClick={() => { cambiarError(""); cambiarMensaje(""); cambiarSeleccion({ accion, empleado }); }}>{t(`acceso.${accion}`)}</Button>)}</div> : <p className="text-xs text-muted-foreground">{t("acceso.administradorExterno")}</p>}
     </div>;
   };

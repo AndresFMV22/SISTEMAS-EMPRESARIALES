@@ -1,6 +1,8 @@
 import { supabase, supabaseConfigurado } from "./supabase";
 import { DATOS_DEMO } from "./demoData";
 
+export const METODOS_PAGO = ["Efectivo", "Transferencia", "Tarjeta crédito", "Tarjeta débito", "PSE", "Nequi"];
+
 /**
  * React → Supabase directo. Importes COP enteros; IDs reales de BD (null en demo/históricos).
  * Lectura: {clientes, paquetes, reservas, pagos, facturas, observaciones, solicitudes}.
@@ -19,7 +21,7 @@ async function llamarRpc(nombre, parametros) {
   const { data, error } = await supabase.rpc(nombre, parametros);
   if (error) {
     if (["PGRST202", "PGRST205", "42883", "42P01", "42703"].includes(error.code)) {
-      throw new Error("Falta la migración de funcionalidad asesor o actualizar la caché de Supabase. Consulta ASESOR_SUPABASE.md.");
+      throw new Error("Falta la migración de funcionalidad asesor o actualizar la caché de Supabase. Consulta docs/ASESOR_SUPABASE.md.");
     }
     const mensaje = error.code === "42501"
       ? "Acceso denegado: verifica tu cuenta activa, rol y la propiedad de la reserva."
@@ -111,16 +113,24 @@ export async function actualizarContactoCliente(id, { correo, telefono }) {
 }
 
 /** {cliente_id,paquete_id,pax}; reserva y factura internas atómicas, precio/cupos bajo bloqueo. */
-export async function crearReservaAsesor({ cliente_id, paquete_id, pax }) {
+export async function crearReservaAsesor({ cliente_id, paquete_id, pax, empleado_id = null, promocion_id = null, cotizacion }) {
   enteroPositivo(cliente_id, "El cliente"); enteroPositivo(paquete_id, "El paquete"); enteroPositivo(pax, "La cantidad de pasajeros");
-  return llamarRpc("operar_asesor", { accion: "crear", datos: { cliente_id, paquete_id, pax } });
+  if (empleado_id !== null) enteroPositivo(empleado_id, "El asesor responsable");
+  if (promocion_id !== null) enteroPositivo(promocion_id, "La promoción");
+  if (!cotizacion) throw new Error("Revisa primero la cotización actualizada.");
+  return llamarRpc("crear_reserva_promocion", { cliente_id, paquete_id, pasajeros: pax, empleado_id, promocion_id, cotizacion });
 }
+
+export const crearReserva = crearReservaAsesor;
 
 /** Abono propio (admin: cualquiera gestionada), sin cambiar estado de reserva; devuelve {id}. */
 export async function registrarAbonoAsesor({ reserva_id, valor, metodo }) {
   enteroPositivo(reserva_id, "La reserva"); enteroPositivo(valor, "El monto");
-  return llamarRpc("operar_asesor", { accion: "abono", datos: { reserva_id, valor, metodo } });
+  if (!METODOS_PAGO.includes(metodo)) throw new Error("Selecciona un método de pago válido.");
+  return llamarRpc("registrar_abono_reserva", { reserva_id, valor, metodo });
 }
+
+export const registrarAbono = registrarAbonoAsesor;
 
 /** Append de texto en reserva propia; autor y fecha siempre los fija BD. Devuelve {id}. */
 export async function agregarObservacion({ reserva_id, texto }) {
@@ -137,10 +147,10 @@ export async function solicitarCambioReserva({ reserva_id, tipo, motivo, paquete
 }
 
 /** Solo admin. {solicitud_id,aprobar:boolean,respuesta}; devuelve solicitud resuelta. */
-export async function resolverSolicitud({ solicitud_id, aprobar, respuesta }) {
+export async function resolverSolicitud({ solicitud_id, aprobar, respuesta, promocion_id = null, sustituir_promocion = false, cotizacion = null, aceptacion_cliente = false }) {
   enteroPositivo(solicitud_id, "La solicitud");
   if (typeof aprobar !== "boolean") throw new Error("Indica si apruebas o rechazas la solicitud.");
-  return llamarRpc("operar_asesor", { accion: "resolver", datos: { solicitud_id, aprobar, respuesta } });
+  return llamarRpc("resolver_solicitud_precio", { solicitud_id, aprobar, respuesta, promocion_id, sustituir_promocion, cotizacion, aceptacion_cliente });
 }
 
 /** Solo admin; destino asesor activo con perfil, no un empleado sin acceso. */

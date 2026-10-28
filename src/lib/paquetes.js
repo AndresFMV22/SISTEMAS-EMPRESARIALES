@@ -24,12 +24,24 @@ function fechaValida(fecha) {
   return !Number.isNaN(instante.getTime()) && instante.toISOString().slice(0, 10) === fecha;
 }
 
+export function duracionPaquete(salida, regreso) {
+  if (!fechaValida(salida) || !fechaValida(regreso) || regreso < salida) return null;
+  const noches = Math.round((Date.parse(`${regreso}T12:00:00Z`) - Date.parse(`${salida}T12:00:00Z`)) / 86400000);
+  return { dias: noches + 1, noches };
+}
+
+// La duración antigua estaba mezclada con el destino. Se muestra calculada, no se reescribe el historial.
+export function ubicacionSinDuracion(ubicacion) {
+  return String(ubicacion || "").replace(/\s*·\s*\d+\s*d[ií]as?(?:\s*\/\s*\d+\s*noches?)?\s*$/i, "");
+}
+
 export function estadoPaquete(paquete, fecha = fechaColombia()) {
   const salidaValida = fechaValida(paquete.salida);
   const regresoValido = fechaValida(paquete.regreso);
   if (regresoValido && paquete.regreso < fecha) return "finalizado";
   if (!salidaValida || !regresoValido || paquete.regreso < paquete.salida) return "incompleto";
   if (paquete.salida <= fecha) return "en_viaje";
+  if (paquete.catalogo_completo && (!paquete.servicios?.length || paquete.servicios.some((servicio) => !servicio.activo))) return "incompleto";
   const cupos = obtenerCupos(paquete);
   if (!cupos) return "incompleto";
   return cupos.disponibles === 0 ? "lleno" : "disponible";

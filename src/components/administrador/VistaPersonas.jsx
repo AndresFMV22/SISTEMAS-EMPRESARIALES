@@ -65,7 +65,7 @@ export default function VistaPersonas({ titulo, accion, filas, columnas, indiceA
         const activo = fila[indiceActivo];
         return <TableRow key={fila[0]} className={`border-border hover:bg-sky-50 dark:hover:bg-sky-400/10 ${activo ? "" : "opacity-55"}`}>
           {columnas.map((columna, indice) => <TableCell key={indice} className={indice === 0 ? "font-medium text-foreground" : ""}>{fila[columna.idx]}</TableCell>)}
-          <TableCell><EtiquetaEstado tono={activo ? "ok" : "bad"}>{activo ? t("st.active") : t("st.inactive")}</EtiquetaEstado></TableCell>
+          <TableCell><EtiquetaEstado estado={activo ? "activo" : "inactivo"}>{activo ? t("st.active") : t("st.inactive")}</EtiquetaEstado></TableCell>
           {mostrarAcceso && <TableCell>{mostrarAcceso(fila)}</TableCell>}
           <TableCell className="max-w-[280px] align-top">{fila[indiceObservacion] ? <div className="flex flex-col items-start gap-1 py-0.5">
             <span className="text-xs leading-snug text-muted-foreground">{fila[indiceObservacion]}</span>

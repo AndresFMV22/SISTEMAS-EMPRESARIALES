@@ -24,6 +24,7 @@ Universidad Pontificia Bolivariana — Medellín, Colombia
 ## Tabla de contenido
 
 - [Descripción](#descripción)
+- [Documentación y continuación](#documentación-y-continuación)
 - [Funcionalidades](#funcionalidades)
 - [Tecnologías](#tecnologías)
 - [Puesta en marcha](#puesta-en-marcha)
@@ -41,8 +42,8 @@ Universidad Pontificia Bolivariana — Medellín, Colombia
 NóvaTravel centraliza en una sola plataforma la operación de una agencia de viajes,
 reemplazando el manejo disperso en hojas de cálculo, cuadernos y chats. Reduce errores,
 agiliza la consulta de disponibilidad y mejora la atención al cliente con procesos
-organizados: registro de clientes, catálogo de paquetes, reservas, pagos, facturación
-electrónica y control de proveedores y personal.
+organizados: registro de clientes, catálogo de paquetes, reservas, pagos, documentos
+internos y control de proveedores y personal.
 
 La aplicación es un **SPA (Single Page Application)** que funciona de dos maneras:
 
@@ -64,11 +65,12 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
 | **Resumen** | Indicadores de registros actuales, gráfico de pagos por mes, paquetes más reservados y **filtro de reservas por rango de fechas**. |
 | **Clientes** | Alta de clientes y, en lugar de borrar, **activar/desactivar** con **observaciones y vigencia (rango de fechas)** para no perder información valiosa. |
 | **Empleados** | Gestión del personal con la misma lógica de **activo/inactivo + observaciones** (útil ante retiros o despidos sin perder el histórico). |
-| **Paquetes turísticos** | Catálogo con precio, cupos y fechas. Tarjetas con estados **Disponible / Cupo completo / En viaje**, filtros por fecha y estado, y viajes finalizados ocultos conservando el historial. |
-| **Reservas** | Al crear una reserva se **genera su factura automáticamente**; maneja estados **Pendiente → En proceso → Pagada**. |
+| **Paquetes turísticos** | Creación y edición de información, destino, incluidos y condiciones con al menos un proveedor. Catálogo compartido con fechas, duración, cupos, estados y viajes finalizados ocultos conservando el historial. |
+| **Reservas** | Creación compartida con factura automática y cupos transaccionales. Estado de reserva (**Pendiente, Confirmada, Finalizada, Cancelada**) separado del estado de pago. |
+| **Promociones** | Ofertas opcionales por paquete, porcentaje o monto por reserva, condiciones de pasajeros y recotización con aceptación del cliente. Migración aplicada; reglas en [`docs/FASE_4.md`](docs/FASE_4.md). |
 | **Pagos** | Flujo de pago con **total, abonado y saldo**; permite **abonos parciales** y **valida que no se pague más que el saldo pendiente**. |
-| **Facturación** | Facturación electrónica ligada a cada reserva, con estados (*Por validar, Enviada, Aceptada*). |
-| **Proveedores** | Aerolíneas, hoteles y operadores con tipo, contacto y convenio. |
+| **Facturación interna** | Documentos ligados a reservas; sin integración DIAN. Falta unificar etiquetas heredadas y cerrar consulta/impresión según [`docs/PENDIENTES.md`](docs/PENDIENTES.md). |
+| **Proveedores** | Búsqueda, alta/edición, activación e inactivación, contacto y convenio internos y paquetes/servicios relacionados. |
 | **Reportes** | Pagos registrados, reservas por asesor y distribución por tipo de viaje calculados desde los registros. |
 
 ### Experiencia de usuario
@@ -97,7 +99,7 @@ La aplicación es un **SPA (Single Page Application)** que funciona de dos maner
 
 ## Puesta en marcha
 
-Requisitos: **Node.js 18+** y **npm**.
+Requisitos: **Node.js 22+** compatible con las dependencias y **npm**.
 
 ```bash
 # 1. Instalar dependencias
@@ -112,7 +114,7 @@ npm run dev
 
 Abre **http://localhost:5173** e ingresa con el correo y la contraseña de tu cuenta
 habilitada. La preparación del primer administrador se describe en
-[`supabase/DESPLIEGUE_ACCESOS.md`](supabase/DESPLIEGUE_ACCESOS.md).
+[`docs/DESPLIEGUE_ACCESOS.md`](docs/DESPLIEGUE_ACCESOS.md).
 
 > Si no configuras Supabase, la app igual arranca con **datos de demostración**.
 
@@ -124,14 +126,22 @@ Solo el responsable opera su reserva; el administrador atiende solicitudes y
 reasigna desde **Reservas → Gestión de reservas**. Las reservas nuevas del asesor
 guardan precio por persona, total y cupos en operaciones transaccionales.
 
-Antes de probarlo con cuentas reales, aplica la **nueva** migración indicada en
-[`ASESOR_SUPABASE.md`](ASESOR_SUPABASE.md). No vuelvas a ejecutar migraciones ya
-aplicadas ni el esquema base sobre un entorno configurado. El panel administrativo
-existente conserva sus operaciones históricas.
+Las migraciones hasta fase 4 ya están aplicadas en el proyecto actual; no repetirlas
+ni ejecutar el esquema base como actualización. Para otra instalación, consultar
+[`docs/CONTEXTO_ACTUAL.md`](docs/CONTEXTO_ACTUAL.md) y las guías de fase.
+El panel administrativo conserva las operaciones históricas.
 
 ---
 
 ## Configurar la base de datos (Supabase)
+
+**Proyecto actual:** las migraciones hasta fase 4 ya están aplicadas. No ejecutar
+estos pasos de instalación sobre ese entorno. Para su estado y continuación,
+consultar [`docs/CONTEXTO_ACTUAL.md`](docs/CONTEXTO_ACTUAL.md).
+
+Los pasos siguientes son para una instalación nueva; el esquema base por sí solo
+no prepara autenticación y permisos de producción. Aplicar después las migraciones
+en el orden documentado y configurar accesos antes de publicar.
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
 2. Abre **SQL Editor → New query**, pega el contenido de
@@ -144,9 +154,9 @@ existente conserva sus operaciones históricas.
 
 **Tablas:** `clientes` · `paquetes` · `reservas` · `pagos` · `facturas` · `proveedores` · `empleados`
 
-> El script no borra tablas ni registros existentes; puedes re-ejecutarlo
-> sin duplicar los registros de muestra. También agrega las columnas que
-> faltan en tablas `clientes` y `paquetes` de versiones anteriores.
+> El esquema contiene registros de muestra. No utilizarlo como mecanismo de
+> actualización de un entorno activo; las actualizaciones se realizan mediante
+> migraciones incrementales revisadas.
 
 ---
 
@@ -170,6 +180,7 @@ VITE_SUPABASE_ANON_KEY=tu_clave_anon
 
 ```
 agencia-viajes-app/
+├─ docs/                       # fases, UI, contexto vigente y guía de pendientes
 ├─ public/
 │  └─ logo-mark.png            # logo de la marca
 ├─ src/
@@ -180,8 +191,7 @@ agencia-viajes-app/
 │  │  └─ asesor/               # panel, resumen, clientes, reservas, pagos y cuenta
 │  ├─ components/
 │  │  ├─ administrador/        # formularios, tablas y gestión exclusivos del administrador
-│  │  ├─ asesor/               # formulario de reserva propio del asesor
-│  │  ├─ compartidos/          # panel visual, catálogo, detalle de reserva, dinero y controles
+│  │  ├─ compartidos/          # panel, catálogo, creación/detalle de reserva, dinero y controles
 │  │  ├─ autenticacion/        # entrada, recuperación y validación de sesión
 │  │  ├─ ui/                   # componentes shadcn/ui (button, card, table, dialog, select...)
 │  │  └─ reactbits/            # efectos: Cuadricula, TarjetaIluminada, TextoBrillante,
@@ -201,6 +211,40 @@ agencia-viajes-app/
 Las vistas reciben datos y acciones del panel de su rol. Los componentes privados
 se guardan bajo ese rol y las piezas utilizadas por ambos viven en `compartidos`.
 Esta organización no añade capas de repositorios ni cambia las operaciones de BD.
+
+Los estados se presentan con `components/compartidos/IndicadorEstado.jsx`, usando
+la paleta común de `lib/estados.js` y conservando siempre su texto. Los componentes
+nuevos deben reutilizarla para evitar colores contradictorios o estados en texto plano.
+
+La creación de reservas y los abonos ya utilizan un flujo protegido común para
+administrador y asesor. La actualización incremental, fechas/duración y estados
+se detallan en [`docs/FASES_1_2.md`](docs/FASES_1_2.md). Se debe aplicar su migración nueva
+antes de utilizar esas operaciones en una instalación nueva. En el proyecto actual
+ya quedó aplicada y verificada; no debe ejecutarse dos veces.
+
+La fase 3 completa paquetes y proveedores y guarda la información comercial de las
+reservas nuevas para conservar lo contratado. Su migración también está aplicada
+en el proyecto actual. El alcance, la compatibilidad con históricos y las pruebas
+se describen en [`docs/FASE_3.md`](docs/FASE_3.md).
+
+La fase 4 incorpora promociones opcionales y recotización con confirmación de
+aceptación del cliente. Su migración **ya está aplicada y verificada** en el
+proyecto actual. Véase [`docs/FASE_4.md`](docs/FASE_4.md) para reglas, pruebas y
+alcance de la verificación remota.
+
+## Documentación y continuación
+
+Todo el contexto técnico está en [`docs/`](docs/README.md). Para otro integrante:
+
+1. Leer [`docs/CONTEXTO_ACTUAL.md`](docs/CONTEXTO_ACTUAL.md): estado real, reglas,
+   estructura, migraciones aplicadas y evidencia.
+2. Seguir [`docs/PENDIENTES.md`](docs/PENDIENTES.md): facturación interna, reportes,
+   cierre de interfaz, pruebas reales y publicación, con criterios de terminación.
+
+La entrega **«Completar reservas, catálogo y promociones y documentar el relevo»**,
+posterior a `39d262c`, reúne las fases 1–4 y esta documentación. El compañero debe
+obtener esa versión antes de continuar. El proyecto remoto no tiene historial CLI
+de migraciones; no usar `db push` a ciegas ni repetir SQL aplicado.
 
 ---
 

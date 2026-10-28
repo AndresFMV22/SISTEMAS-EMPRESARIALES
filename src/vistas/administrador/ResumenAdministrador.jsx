@@ -103,10 +103,10 @@ export default function ResumenAdministrador({ datos }) {
     </div>
     <Panel titulo={t("dash.recientes")} etiqueta={<span className="text-[11px] font-medium text-blue-600 dark:text-sky-300">{t("col.fecha")}</span>}>
       <Table><TableHeader><TableRow className="border-border hover:bg-transparent">
-        <CabeceraTabla>{t("col.reserva")}</CabeceraTabla><CabeceraTabla>{t("col.cliente")}</CabeceraTabla><CabeceraTabla>{t("col.paquete")}</CabeceraTabla><CabeceraTabla>{t("col.fecha")}</CabeceraTabla><CabeceraTabla>{t("col.estado")}</CabeceraTabla>
+        <CabeceraTabla>{t("col.reserva")}</CabeceraTabla><CabeceraTabla>{t("col.cliente")}</CabeceraTabla><CabeceraTabla>{t("col.paquete")}</CabeceraTabla><CabeceraTabla>{t("col.fecha")}</CabeceraTabla><CabeceraTabla>{t("fases.estadoReserva")}</CabeceraTabla>
       </TableRow></TableHeader><TableBody>
         {filtradas.slice(0, 12).map((reserva) => <TableRow key={reserva[0]} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
-          <TableCell className="font-medium text-foreground">{reserva[0]}</TableCell><TableCell>{reserva[1]}</TableCell><TableCell>{reserva[2]}</TableCell><TableCell>{reserva[4]}</TableCell><TableCell><EtiquetaEstado tono={reserva[6]}>{reserva[7]}</EtiquetaEstado></TableCell>
+          <TableCell className="font-medium text-foreground">{reserva[0]}</TableCell><TableCell>{reserva[1]}</TableCell><TableCell>{reserva[2]}</TableCell><TableCell>{reserva[4]}</TableCell><TableCell><EtiquetaEstado estado={reserva[7]} tono={reserva[6]}>{reserva[7] === "Pendiente" ? t("fases.pendienteConfirmacion") : reserva[7]}</EtiquetaEstado></TableCell>
         </TableRow>)}
         {filtradas.length === 0 && <TableRow><TableCell colSpan={5} className="py-6 text-center text-muted-foreground">—</TableCell></TableRow>}
       </TableBody></Table>

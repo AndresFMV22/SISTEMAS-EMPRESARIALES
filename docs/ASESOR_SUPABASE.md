@@ -1,5 +1,23 @@
 # Operación del asesor: React + Supabase directo
 
+> Documento de la entrega inicial. Para el estado vigente, leer primero
+> [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md). Las migraciones hasta fase 4 ya están
+> aplicadas en el proyecto actual. Las menciones posteriores a «no aplicado» son
+> evidencia histórica de esta entrega, no instrucciones de despliegue vigentes.
+
+> Actualización posterior: las fases 1 y 2 unifican creación y abonos de ambos roles.
+> Véase `FASES_1_2.md` y su migración incremental. La descripción siguiente documenta
+> la entrega inicial: el formulario conectado antiguo del administrador ya fue
+> sustituido y las nuevas RPC mantienen compatibilidad con las operaciones existentes.
+> Ambas actualizaciones ya se verificaron en el proyecto actual; las menciones de
+> despliegue pendiente de la auditoría original son históricas, no instrucciones
+> para repetir las migraciones en ese proyecto.
+
+> Fase 4: creación y resolución utilizan ahora cotizaciones y promociones.
+> Sus reglas y firmas nuevas se describen en `FASE_4.md`; esa migración ya está
+> aplicada y verificada en el proyecto actual. Los contratos de creación/resolución
+> de la entrega inicial que aparecen debajo son antecedentes de esa actualización.
+
 ## Estado de esta entrega
 
 **SQL escrito y comprobado localmente; NO aplicado ni consultado en la BD remota.** No requiere otro servidor, otra autenticación ni desplegar una Edge Function. No añade repositorios, fábricas, adaptadores ni dependencias de aplicación. La interfaz utiliza un hook de carga y funciones directas de Supabase.

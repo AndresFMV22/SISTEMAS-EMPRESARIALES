@@ -48,7 +48,7 @@ export default function DialogoAgregar({ label: etiqueta, title: titulo, fields:
       <form onSubmit={enviar} className="space-y-3"><div className="grid grid-cols-2 gap-3">
         {campos.map((campo) => <div key={campo.key} className={`space-y-1.5 ${campo.half ? "" : "col-span-2"}`}>
           <Label htmlFor={campo.key}>{campo.label}</Label>
-          {campo.select ? <Select value={valores[campo.key]} onValueChange={(valor) => elegirCampo(campo.key, valor)}>
+          {campo.select ? <Select value={valores[campo.key]} onValueChange={(valor) => { if (valor != null) elegirCampo(campo.key, valor); }}>
             <SelectTrigger id={campo.key} className="w-full"><SelectValue placeholder={`Selecciona ${campo.label.toLowerCase()}`} /></SelectTrigger>
             <SelectContent className="max-h-64">{opcionesDe(campo).length === 0
               ? <div className="px-2 py-1.5 text-sm text-slate-400">Sin opciones</div>

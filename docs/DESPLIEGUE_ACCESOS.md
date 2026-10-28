@@ -1,5 +1,12 @@
 # Entregas 1 y 2: autenticación y accesos
 
+> Procedimiento e informe de la entrega inicial. La migración de accesos y las
+> posteriores hasta fase 4 ya están aplicadas en el proyecto actual; no repetirlas.
+> [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md) prevalece para su estado. La CLI confirmó
+> `gestionar-accesos` ACTIVE v3; la configuración y matriz real de producción
+> siguen sin certificarse. Las rutas de SQL/código son relativas a la raíz del repositorio;
+> `migrations/` en el procedimiento original significa `supabase/migrations/`.
+
 ## Estado y alcance
 
 Implementación local: no se aplicó SQL remoto, no se crearon usuarios remotos,

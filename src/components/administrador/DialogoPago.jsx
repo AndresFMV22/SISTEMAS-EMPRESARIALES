@@ -6,12 +6,14 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import CampoDinero from "@/components/compartidos/CampoDinero";
 import { leerDinero, mostrarDinero } from "@/lib/dinero";
 import { useIdioma } from "@/lib/i18n.jsx";
+import { METODOS_PAGO } from "@/lib/asesor";
 
 export default function DialogoPago({ codigo, informacion, alPagar }) {
   const { t } = useIdioma();
   const [abierto, setAbierto] = useState(false);
   const [monto, setMonto] = useState("");
   const [error, setError] = useState("");
+  const [metodo, cambiarMetodo] = useState("");
   const [guardando, cambiarGuardando] = useState(false);
   useEffect(() => { if (abierto) { setMonto(String(informacion.saldo)); setError(""); } }, [abierto, informacion.saldo]);
   const enviar = async (evento) => {
@@ -21,7 +23,8 @@ export default function DialogoPago({ codigo, informacion, alPagar }) {
     if (numero <= 0) { setError(t("pay.min")); return; }
     if (numero > informacion.saldo) { setError(t("pay.over")); return; }
     cambiarGuardando(true); setError("");
-    try { await alPagar(codigo, numero); setAbierto(false); }
+    if (!METODOS_PAGO.includes(metodo)) { setError(t("asesor.seleccionar")); cambiarGuardando(false); return; }
+    try { await alPagar(codigo, numero, metodo); setAbierto(false); }
     catch (fallo) { setError(fallo.message); }
     finally { cambiarGuardando(false); }
   };
@@ -36,6 +39,10 @@ export default function DialogoPago({ codigo, informacion, alPagar }) {
       {informacion.saldo <= 0 ? <p className="flex items-center justify-center gap-1 py-3 text-sm font-medium text-emerald-600"><Check className="h-4 w-4" />{t("pay.done")}</p>
         : <form onSubmit={enviar} className="mt-3 space-y-3">
           <div className="space-y-1.5"><Label htmlFor="amount">{t("pay.amount")}</Label><CampoDinero id="amount" valor={monto} alCambiar={setMonto} placeholder="$ 0" /><p className="text-[11px] text-muted-foreground">{t("pay.maxHint")} {mostrarDinero(informacion.saldo)}</p></div>
+          <div className="space-y-1.5"><Label htmlFor="metodo-abono-admin">{t("asesor.metodo")}</Label>
+            <select id="metodo-abono-admin" required className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={metodo} onChange={(evento) => cambiarMetodo(evento.target.value)}>
+              <option value="">{t("asesor.seleccionar")}</option>{METODOS_PAGO.map((opcion) => <option key={opcion} value={opcion}>{t(`asesor.metodo.${opcion}`)}</option>)}
+            </select></div>
           {error && <p role="alert" className="text-sm text-rose-500">{error}</p>}
           <DialogFooter className="gap-2 sm:gap-2"><DialogClose disabled={guardando} render={<Button type="button" variant="outline" />}>{t("btn.cancel")}</DialogClose><Button type="submit" disabled={guardando} className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">{t(guardando ? "acceso.esperar" : "btn.pay")}</Button></DialogFooter>
         </form>}

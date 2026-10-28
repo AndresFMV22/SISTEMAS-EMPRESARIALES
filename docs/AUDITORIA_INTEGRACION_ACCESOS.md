@@ -1,5 +1,10 @@
 # Auditoría de integración de accesos
 
+> Auditoría histórica; conserva hallazgos y evidencias de aquella versión.
+> El panel del asesor y las transacciones comunes ya se implementaron después.
+> Las migraciones hasta fase 4 están aplicadas. Consultar [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md)
+> y [PENDIENTES.md](PENDIENTES.md) antes de convertir un hallazgo antiguo en tarea.
+
 ## Cierre de revisión de interfaz
 
 La revisión posterior de `@interfaz` cerró localmente la parte UI de H2 y los

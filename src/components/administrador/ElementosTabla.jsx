@@ -1,18 +1,8 @@
-import { Badge } from "@/components/ui/badge";
+import IndicadorEstado from "@/components/compartidos/IndicadorEstado";
 import { TableHead } from "@/components/ui/table";
 
-const estilosEstado = {
-  ok: "bg-emerald-500/12 text-emerald-600 border-emerald-500/25",
-  warn: "bg-amber-500/12 text-amber-600 border-amber-500/25",
-  bad: "bg-rose-500/12 text-rose-600 border-rose-500/25",
-  info: "bg-sky-500/12 text-sky-600 border-sky-500/25",
-};
-
-export function EtiquetaEstado({ tono, children }) {
-  return <Badge variant="outline" className={`rounded-full font-semibold ${estilosEstado[tono] || estilosEstado.info}`}>
-    {(tono === "ok" || tono === "bad") && <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
-    {children}
-  </Badge>;
+export function EtiquetaEstado({ tono, estado, children }) {
+  return <IndicadorEstado estado={estado ?? (typeof children === "string" ? children : undefined)} etiqueta={children} tono={tono} />;
 }
 
 export function Panel({ titulo, etiqueta, children, className = "" }) {

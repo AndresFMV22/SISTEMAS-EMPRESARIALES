@@ -18,7 +18,11 @@ export default function ReportesAdministrador({ datos }) {
     agrupados[asesor] = (agrupados[asesor] || 0) + 1;
     return agrupados;
   }, {})).sort((primero, segundo) => segundo[1] - primero[1]);
-  const nacionales = reservas.filter((reserva) => paquetes.find((paquete) => paquete.nombre === reserva[2])?.ubicacion?.includes("Colombia")).length;
+  const nacionales = reservas.filter((reserva) => {
+    const paquete = reserva[8]?.paquete_id != null ? paquetes.find((fila) => String(fila.id) === String(reserva[8].paquete_id)) : paquetes.find((fila) => fila.nombre === reserva[2]);
+    const tipo = reserva[8]?.contenido_contratado?.tipo_destino || paquete?.tipo_destino;
+    return tipo ? tipo === "nacional" : paquete?.ubicacion?.includes("Colombia");
+  }).length;
   const totalViajes = reservas.length || 1;
   const distribucion = [[Plane, "Internacionales", Math.round((reservas.length - nacionales) / totalViajes * 100)], [Bus, "Nacionales", Math.round(nacionales / totalViajes * 100)], [Ship, "Cruceros", 0]];
   return <div className="space-y-6">

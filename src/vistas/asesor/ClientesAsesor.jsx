@@ -21,7 +21,7 @@ export default function ClientesAsesor({ datos, ocupado, ejecutar, alReserva }) 
       <FormularioOperacion key={cliente.id} titulo={t("asesor.editarContacto")} ocupado={ocupado} alEnviar={(valores) => ejecutar(() => actualizarContactoCliente(cliente.id, valores))}>
         <div className="grid gap-3 sm:grid-cols-2"><CampoAsesor etiqueta={t("col.correo")} name="correo" type="email" spellCheck={false} autoComplete="email" defaultValue={cliente.correo} required /><CampoAsesor etiqueta={t("col.tel")} name="telefono" type="tel" autoComplete="tel" defaultValue={cliente.telefono} required /></div>
       </FormularioOperacion>
-      <TablaAsesor columnas={[t("col.reserva"), t("col.paquete"), t("col.estado"), t("col.accion")]} filas={reservas.map((reserva) => [reserva.codigo, reserva.paquete, <EstadoAsesor key="estado" estado={reserva.estado} />, <Button key="detalle" variant="outline" onClick={() => alReserva(reserva)}>{t("asesor.verDetalle")}</Button>])} />
+      <TablaAsesor columnas={[t("col.reserva"), t("col.paquete"), t("fases.estadoReserva"), t("col.accion")]} filas={reservas.map((reserva) => [reserva.codigo, reserva.paquete, <EstadoAsesor key="estado" estado={reserva.estado} tipo="reserva" />, <Button key="detalle" variant="outline" onClick={() => alReserva(reserva)}>{t("asesor.verDetalle")}</Button>])} />
       <h3 className="font-semibold">{t("nav.pagos")}</h3><TablaAsesor columnas={[t("asesor.recibo"), t("col.reserva"), t("asesor.valor"), t("col.fecha")]} filas={pagos.map((pago) => [pago.recibo, pago.reserva, mostrarDinero(pago.valor), pago.fecha])} />
     </SeccionAsesor>}
     <SeccionAsesor titulo={t("asesor.nuevoCliente")}><FormularioOperacion ocupado={ocupado} alEnviar={(valores) => ejecutar(() => registrarCliente(valores))}>

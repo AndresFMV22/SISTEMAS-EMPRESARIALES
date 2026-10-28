@@ -1,5 +1,6 @@
 import { fechaColombia } from "@/lib/paquetes";
 import { mostrarDinero } from "@/lib/dinero";
+import { METODOS_PAGO } from "@/lib/asesor";
 
 export const hoy = fechaColombia;
 export const n4 = () => Math.floor(1000 + Math.random() * 9000);
@@ -62,7 +63,7 @@ export const FORMULARIOS = {
     campos: [
       { key: "reserva", label: "Reserva", select: "reservas", half: true },
       { key: "cliente", label: "Cliente", select: "clientes", half: true },
-      { key: "metodo", label: "Método", select: ["Tarjeta crédito", "Transferencia", "PSE", "Efectivo", "Nequi"], half: true },
+      { key: "metodo", label: "Método", select: METODOS_PAGO, half: true },
       { key: "valor", label: "Valor", ph: "$ 1.000.000", moneda: true, half: true },
     ],
     construir: (valores) => {
@@ -86,50 +87,6 @@ export const FORMULARIOS = {
       return {
         datos: { factura, cliente: valores.cliente, nit: valores.nit, reserva: valores.reserva, valor: mostrarDinero(valores.valor), fecha: hoy(), tono: "info", estado: "Enviada" },
         fila: [factura, valores.cliente, valores.nit, valores.reserva, mostrarDinero(valores.valor), hoy(), "info", "Enviada"],
-      };
-    },
-  },
-  proveedores: {
-    entidad: "proveedores", tabla: "proveedores", etiqueta: "Nuevo proveedor", titulo: "Registrar nuevo proveedor",
-    campos: [
-      { key: "nombre", label: "Proveedor", ph: "Ej. Avianca" },
-      { key: "tipo", label: "Tipo", select: ["Aerolínea", "Hotelería", "Operador terrestre", "Naviera"], half: true },
-      { key: "convenio", label: "Convenio", ph: "Comisión 8%", half: true },
-      { key: "contacto", label: "Contacto", ph: "correo@proveedor.com" },
-    ],
-    construir: (valores) => ({
-      datos: { nombre: valores.nombre, tipo: valores.tipo, contacto: valores.contacto, convenio: valores.convenio, tono: "info", estado: "Nuevo" },
-      fila: [valores.nombre, valores.tipo, valores.contacto, valores.convenio, "info", "Nuevo"],
-    }),
-  },
-  paquetes: {
-    entidad: "paquetes", tabla: "paquetes", etiqueta: "Nuevo paquete", titulo: "Registrar nuevo paquete",
-    campos: [
-      { key: "nombre", label: "Nombre del paquete", ph: "Ej. Cancún Paraíso" },
-      { key: "loc", label: "Ubicación / duración", ph: "México · 7 días / 6 noches" },
-      { key: "precio", label: "Precio", ph: "$ 6.480.000", moneda: true, half: true },
-      { key: "capacidad", label: "Capacidad total", ph: "40", type: "number", half: true },
-      { key: "disponibles", label: "Cupos disponibles", ph: "12", type: "number", half: true },
-      { key: "salida", label: "Fecha de salida", type: "date", half: true },
-      { key: "regreso", label: "Fecha de regreso", type: "date", half: true },
-      { key: "icono", label: "Ícono", select: ["umbrella", "landmark", "waves", "ferriswheel", "mountain", "building"] },
-    ],
-    construir: (valores) => {
-      const icono = valores.icono || "umbrella";
-      const capacidad = Number(valores.capacidad);
-      const disponibles = Number(valores.disponibles);
-      if (!String(valores.capacidad).trim() || !String(valores.disponibles).trim()
-        || !Number.isSafeInteger(capacidad) || capacidad <= 0
-        || !Number.isSafeInteger(disponibles) || disponibles < 0 || disponibles > capacidad) {
-        throw new Error("Indica capacidad total y cupos disponibles enteros. La capacidad debe ser positiva y los disponibles deben estar entre cero y la capacidad.");
-      }
-      if (!valores.salida || !valores.regreso || valores.regreso < valores.salida) {
-        throw new Error("Indica salida y regreso. El regreso no puede ser anterior a la salida.");
-      }
-      const cupo = `Cupos: ${disponibles} / ${capacidad}`;
-      return {
-        datos: { nombre: valores.nombre, loc: valores.loc, precio: mostrarDinero(valores.precio), cupo, icono, salida: valores.salida, regreso: valores.regreso },
-        fila: { icono, nombre: valores.nombre, ubicacion: valores.loc, precio: mostrarDinero(valores.precio), cupo, salida: valores.salida, regreso: valores.regreso },
       };
     },
   },

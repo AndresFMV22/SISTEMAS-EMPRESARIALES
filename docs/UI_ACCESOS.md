@@ -1,5 +1,10 @@
 # UI de autenticación y accesos — entregas 1 y 2
 
+> Informe histórico de accesos. El asesor ya tiene un panel operativo completo;
+> las limitaciones de «solo bienvenida» y entregas pendientes descritas aquí
+> corresponden a aquella revisión. Estado vigente: [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md).
+> La matriz real de Auth/SMTP continúa sin certificarse: véase [PENDIENTES.md](PENDIENTES.md).
+
 ## Alcance implementado
 
 - `src/components/autenticacion/PuertaAcceso.jsx`: correo y contraseña mediante el contrato de
@@ -118,7 +123,7 @@ configuración Vite, exportaciones de Fast Refresh y efectos heredados.
 
 ## Preparación y pruebas pendientes del entorno real
 
-El despliegue se rige por `supabase/DESPLIEGUE_ACCESOS.md`. Este trabajo de UI no
+El despliegue se rige por [DESPLIEGUE_ACCESOS.md](DESPLIEGUE_ACCESOS.md). Este trabajo de UI no
 modifica ni despliega migraciones, funciones, `autenticacion.js`, `db.js` o secretos.
 Si faltan RPC, perfil inicial, función, CORS, SMTP o configuración Auth, la UI
 informa el fallo y pide revisar la preparación; no lo sustituye por éxito demo.
@@ -137,7 +142,7 @@ alta pública ni intercambio PKCE `?code=`.
 
 ## Cierre de hallazgos UI de la auditoría de integración
 
-Referencia revisada: `supabase/AUDITORIA_INTEGRACION_ACCESOS.md`, junto con la
+Referencia revisada: [AUDITORIA_INTEGRACION_ACCESOS.md](AUDITORIA_INTEGRACION_ACCESOS.md), junto con la
 Edge Function y la migración actualizadas. **No se editó ningún archivo de
 servidor ni la migración.** Este apartado actualiza el estado de sus pendientes
 de UI; no altera el informe del agente de servidor.

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useIdioma } from "@/lib/i18n.jsx";
 import { mostrarDinero } from "@/lib/dinero";
+import IndicadorEstado from "./IndicadorEstado";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 export const mismoId = (primero, segundo) => primero != null && segundo != null && String(primero) === String(segundo);
@@ -28,14 +29,14 @@ export function CampoAsesor({ etiqueta, opciones, multilinea = false, ...propied
   </div>;
 }
 
-export function FormularioOperacion({ titulo, ocupado, alEnviar, etiqueta = "btn.save", children }) {
+export function FormularioOperacion({ titulo, ocupado, alEnviar, etiqueta = "btn.save", deshabilitarEnvio = false, children }) {
   const { t } = useIdioma();
   const bloqueo = useRef(false);
   const aviso = useRef(null);
   const [error, cambiarError] = useState("");
   const enviar = async (evento) => {
     evento.preventDefault();
-    if (bloqueo.current || ocupado) return;
+    if (bloqueo.current || ocupado || deshabilitarEnvio) return;
     const formulario = evento.currentTarget;
     bloqueo.current = true; cambiarError("");
     try { if (await alEnviar(Object.fromEntries(new FormData(formulario)))) formulario.reset(); }
@@ -44,7 +45,7 @@ export function FormularioOperacion({ titulo, ocupado, alEnviar, etiqueta = "btn
   };
   return <form onSubmit={enviar} className="space-y-3" aria-busy={ocupado}>
     {titulo && <h3 className="font-semibold">{titulo}</h3>}
-    <fieldset disabled={ocupado} className="space-y-3">{children}<Button type="submit">{t(ocupado ? "acceso.esperar" : etiqueta)}</Button></fieldset>
+    <fieldset disabled={ocupado} className="space-y-3">{children}<Button type="submit" disabled={deshabilitarEnvio}>{t(ocupado ? "acceso.esperar" : etiqueta)}</Button></fieldset>
     {error && <p ref={aviso} tabIndex={-1} role="alert" className="text-sm text-rose-600 focus-visible:ring-2">{error}</p>}
   </form>;
 }
@@ -57,8 +58,10 @@ export function TablaAsesor({ columnas, filas }) {
   </TableBody></Table>;
 }
 
-export function EstadoAsesor({ estado }) {
+export function EstadoAsesor({ estado, tipo }) {
   const { t } = useIdioma();
-  const color = ["Confirmada", "Pagado", "aprobada"].includes(estado) ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-600" : ["Cancelada", "rechazada"].includes(estado) ? "border-rose-500/25 bg-rose-500/10 text-rose-600" : "border-sky-500/25 bg-sky-500/10 text-sky-600";
-  return <span className={`inline-block rounded-full border px-2 py-1 text-xs font-semibold ${color}`}>{estado ? t(`asesor.estado.${estado}`) === `asesor.estado.${estado}` ? estado : t(`asesor.estado.${estado}`) : "—"}</span>;
+  const etiqueta = estado === "Pendiente" && tipo === "reserva" ? t("fases.pendienteConfirmacion")
+    : estado === "Pendiente" && tipo === "pago" ? t("fases.sinPago")
+      : estado ? t(`asesor.estado.${estado}`) === `asesor.estado.${estado}` ? estado : t(`asesor.estado.${estado}`) : "—";
+  return <IndicadorEstado estado={estado} etiqueta={etiqueta} />;
 }

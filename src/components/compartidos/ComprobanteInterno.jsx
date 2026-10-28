@@ -7,7 +7,7 @@ import { leerDinero, mostrarDinero } from "@/lib/dinero";
 
 // Comprobante interno de solo lectura, imprimible con el diálogo del navegador.
 // No simula validación DIAN ni recalcula ventas: usa los datos pactados y guardados.
-export default function ComprobanteInterno({ factura, reserva, pagos = [], paquete, alCerrar }) {
+export default function ComprobanteInterno({ factura, reserva, pagos = [], paquete, anulado = false, alCerrar }) {
   const { t } = useIdioma();
   const meta = reserva && typeof reserva[8] === "object" ? reserva[8] : null;
   const pax = reserva?.[3] ?? null;
@@ -43,10 +43,13 @@ export default function ComprobanteInterno({ factura, reserva, pagos = [], paque
             <div className="text-right text-xs text-muted-foreground">
               <p>{t("comp.emitido")}: {factura[5] || "—"}</p>
               <p className="mt-1"><IndicadorEstado estado={factura[7]} etiqueta={factura[7]} tono={factura[6]} /></p>
+              <p className="mt-1"><IndicadorEstado estado={anulado ? "anulada" : "vigente"} etiqueta={anulado ? t("fac.anulado") : t("fac.vigente")} /></p>
             </div>
           </div>
 
           <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">{t("fac.aviso")}</p>
+          {anulado && <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{t("fac.anuladoNota")}</p>}
+          {anulado && pagado > 0 && <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">{t("fac.devolucionNota")}</p>}
           {!reserva && <p className="text-xs text-muted-foreground">{t("comp.sinReserva")}</p>}
 
           <dl className="grid grid-cols-2 gap-3">

@@ -578,6 +578,35 @@ IDIOMAS.forEach((opcion, indice) => {
   DICCIONARIO[opcion.code]["sub.promociones"] = ["Ofertas, vigencia y condiciones de pasajeros", "Offers, validity and passenger conditions", "Offres, validité et conditions de passagers", "Предложения, сроки и условия по пассажирам", "Ofertas, vigência e condições de passageiros"][indice];
 });
 
+const textosFiltros = {
+  buscarPago: ["Buscar por recibo, reserva o cliente", "Search by receipt, booking or client", "Rechercher par reçu, réservation ou client", "Поиск по квитанции, брони или клиенту", "Buscar por recibo, reserva ou cliente"],
+  buscarReserva: ["Buscar por reserva, cliente o paquete", "Search by booking, client or package", "Rechercher par réservation, client ou forfait", "Поиск по брони, клиенту или пакету", "Buscar por reserva, cliente ou pacote"],
+  metodo: ["Método de pago", "Payment method", "Mode de paiement", "Способ оплаты", "Forma de pagamento"],
+  limpiar: ["Limpiar filtros", "Clear filters", "Effacer les filtres", "Сбросить фильтры", "Limpar filtros"],
+  totalMovimientos: ["Total de movimientos filtrados", "Total of filtered movements", "Total des mouvements filtrés", "Итог отфильтрованных операций", "Total de movimentos filtrados"],
+  fechaPago: ["Fecha del pago", "Payment date", "Date du paiement", "Дата платежа", "Data do pagamento"],
+  sinResultados: ["Ningún registro coincide con estos filtros.", "No records match these filters.", "Aucun enregistrement ne correspond à ces filtres.", "Нет записей по этим фильтрам.", "Nenhum registro corresponde a estes filtros."],
+  "pago.pendiente": ["Pendiente", "Pending", "En attente", "Ожидает", "Pendente"],
+  "pago.parcial": ["Parcial", "Partial", "Partiel", "Частично", "Parcial"],
+  "pago.pagado": ["Pagado", "Paid", "Payé", "Оплачено", "Pago"],
+};
+Object.entries(textosFiltros).forEach(([clave, traducciones]) => {
+  IDIOMAS.forEach((opcion, indice) => { DICCIONARIO[opcion.code][`flt.${clave}`] = traducciones[indice]; });
+});
+
+const textosVigencia = {
+  vigencia: ["Vigencia del documento", "Document validity", "Validité du document", "Действие документа", "Vigência do documento"],
+  vigentes: ["Vigentes", "Active", "En vigueur", "Действующие", "Vigentes"],
+  anulados: ["Anulados", "Voided", "Annulés", "Аннулированные", "Anulados"],
+  vigente: ["Vigente", "Active", "En vigueur", "Действует", "Vigente"],
+  anulado: ["Anulado", "Voided", "Annulé", "Аннулирован", "Anulado"],
+  anuladoNota: ["Documento anulado por cancelación aprobada de la reserva. Se conserva como histórico; no cuenta como venta vigente ni deuda activa.", "Document voided by an approved booking cancellation. Kept as history; not counted as active sale or debt.", "Document annulé suite à une annulation approuvée. Conservé comme historique ; ni vente active ni dette.", "Документ аннулирован из-за одобренной отмены брони. Сохраняется как история; не считается активной продажей или долгом.", "Documento anulado por cancelamento aprovado da reserva. Mantido como histórico; não conta como venda ativa nem dívida."],
+  devolucionNota: ["Tiene pagos registrados. Corresponde revisar si procede una devolución; no se marca como reembolsado ni se genera de forma automática.", "It has recorded payments. Review whether a refund applies; it is not marked refunded nor generated automatically.", "Des paiements sont enregistrés. Vérifiez si un remboursement s’applique ; il n’est ni marqué remboursé ni généré automatiquement.", "Есть зарегистрированные платежи. Проверьте, положен ли возврат; он не помечается возвращённым и не создаётся автоматически.", "Há pagamentos registrados. Verifique se cabe uma devolução; não é marcada como reembolsada nem gerada automaticamente."],
+};
+Object.entries(textosVigencia).forEach(([clave, traducciones]) => {
+  IDIOMAS.forEach((opcion, indice) => { DICCIONARIO[opcion.code][`fac.${clave}`] = traducciones[indice]; });
+});
+
 const ContextoIdioma = createContext({ lang: "es", setLang: () => {}, t: (clave) => clave });
 
 export function ProveedorIdioma({ children }) {

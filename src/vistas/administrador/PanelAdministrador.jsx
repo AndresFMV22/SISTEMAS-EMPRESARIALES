@@ -218,7 +218,7 @@ export default function PanelAdministrador({ alSalir, oscuro, cambiarOscuro, per
       case "reservas": return <ReservasAdministrador reservas={datos.reservas} alPagar={pagarReserva} obtenerSaldo={obtenerSaldo} esGestionada={esGestionada} alGestionar={() => cambiarVista("gestionReservas")}
         accion={<div className="flex flex-wrap gap-2">{accionAgregar("reservas")}<Button size="sm" variant="outline" onClick={() => cambiarVista("gestionReservas")}>{t("asesor.gestion")}</Button></div>} />;
       case "gestionReservas": return <GestionReservas validarAcceso={validarAcceso} alActualizar={sincronizarGestion} alCambiarOcupado={cambiarGestionOcupada} alVolver={() => navegar("reservas")} />;
-      case "pagos": return <PagosAdministrador filas={datos.pagos} accion={accionAgregar("pagos")} />;
+      case "pagos": return <PagosAdministrador filas={datos.pagos} reservas={datos.reservas} obtenerSaldo={obtenerSaldo} accion={accionAgregar("pagos")} />;
       case "facturas": return <FacturasAdministrador filas={datos.facturas} datos={datos} accion={accionAgregar("facturas")} />;
       case "proveedores": return <ProveedoresAdministrador datosDemo={catalogoDemo} validarAcceso={validarAcceso} alActualizar={sincronizarGestion} alGuardarDemo={guardarProveedorDemo} />;
       case "reportes": return <ReportesAdministrador datos={datos} />;

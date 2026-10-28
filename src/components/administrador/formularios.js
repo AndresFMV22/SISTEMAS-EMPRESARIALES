@@ -75,18 +75,18 @@ export const FORMULARIOS = {
     },
   },
   facturas: {
-    entidad: "facturas", tabla: "facturas", etiqueta: "Emitir factura", titulo: "Emitir nueva factura",
+    entidad: "facturas", tabla: "facturas", etiqueta: "Emitir comprobante", titulo: "Emitir comprobante interno",
     campos: [
       { key: "cliente", label: "Cliente", select: "clientes" },
       { key: "nit", label: "NIT / CC", ph: "900.000.000-0", half: true },
       { key: "reserva", label: "Reserva", select: "reservas", half: true },
-      { key: "valor", label: "Valor + IVA", ph: "$ 6.480.000", moneda: true },
+      { key: "valor", label: "Valor", ph: "$ 6.480.000", moneda: true },
     ],
     construir: (valores) => {
       const factura = "FE-" + n6();
       return {
-        datos: { factura, cliente: valores.cliente, nit: valores.nit, reserva: valores.reserva, valor: mostrarDinero(valores.valor), fecha: hoy(), tono: "info", estado: "Enviada" },
-        fila: [factura, valores.cliente, valores.nit, valores.reserva, mostrarDinero(valores.valor), hoy(), "info", "Enviada"],
+        datos: { factura, cliente: valores.cliente, nit: valores.nit, reserva: valores.reserva, valor: mostrarDinero(valores.valor), fecha: hoy(), tono: "info", estado: "Emitida" },
+        fila: [factura, valores.cliente, valores.nit, valores.reserva, mostrarDinero(valores.valor), hoy(), "info", "Emitida"],
       };
     },
   },

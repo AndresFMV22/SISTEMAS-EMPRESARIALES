@@ -1,10 +1,65 @@
-import TablaRegistros from "@/components/administrador/TablaRegistros";
+import { useState } from "react";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { Panel, CabeceraTabla, EtiquetaEstado } from "@/components/administrador/ElementosTabla";
+import ComprobanteInterno from "@/components/compartidos/ComprobanteInterno";
 import { useIdioma } from "@/lib/i18n.jsx";
 import { mostrarDinero } from "@/lib/dinero";
 
-export default function FacturasAdministrador({ filas, accion }) {
+export default function FacturasAdministrador({ filas, datos, accion }) {
   const { t } = useIdioma();
-  return <TablaRegistros titulo={t("nav.facturas")} accion={accion}
-    columnas={["Factura", "Cliente", "NIT / CC", "Reserva", "Valor + IVA", "Fecha", "Estado DIAN"]}
-    filas={filas.map((fila) => [fila[0], fila[1], fila[2], fila[3], mostrarDinero(fila[4]), fila[5], { tono: fila[6], texto: fila[7] }])} />;
+  const [comprobante, setComprobante] = useState(null);
+  const reservas = datos?.reservas || [];
+  const pagos = datos?.pagos || [];
+  const paquetes = datos?.paquetes || [];
+
+  const abrir = (factura) => {
+    const reserva = reservas.find((fila) => fila[0] === factura[3]) || null;
+    const pagosReserva = pagos.filter((fila) => fila[1] === factura[3]);
+    const paquete = reserva ? paquetes.find((fila) => fila.nombre === reserva[2]) : null;
+    setComprobante({ factura, reserva, pagos: pagosReserva, paquete });
+  };
+
+  return (
+    <Panel titulo={t("nav.facturas")} etiqueta={accion}>
+      <p className="mb-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">{t("fac.aviso")}</p>
+      <Table>
+        <TableHeader>
+          <TableRow className="border-border hover:bg-transparent">
+            <CabeceraTabla>{t("fac.documento")}</CabeceraTabla>
+            <CabeceraTabla>{t("col.cliente")}</CabeceraTabla>
+            <CabeceraTabla>{t("col.doc")}</CabeceraTabla>
+            <CabeceraTabla>{t("col.reserva")}</CabeceraTabla>
+            <CabeceraTabla>{t("fac.valor")}</CabeceraTabla>
+            <CabeceraTabla>{t("col.fecha")}</CabeceraTabla>
+            <CabeceraTabla>{t("col.estado")}</CabeceraTabla>
+            <CabeceraTabla>{t("col.accion")}</CabeceraTabla>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filas.map((fila, indice) => (
+            <TableRow key={indice} className="border-border hover:bg-sky-50 dark:hover:bg-sky-400/10">
+              <TableCell className="font-medium text-foreground">{fila[0]}</TableCell>
+              <TableCell>{fila[1]}</TableCell>
+              <TableCell>{fila[2]}</TableCell>
+              <TableCell>{fila[3]}</TableCell>
+              <TableCell>{mostrarDinero(fila[4])}</TableCell>
+              <TableCell>{fila[5]}</TableCell>
+              <TableCell><EtiquetaEstado estado={fila[7]} tono={fila[6]}>{fila[7]}</EtiquetaEstado></TableCell>
+              <TableCell>
+                <Button size="sm" variant="outline" onClick={() => abrir(fila)}
+                  className="h-7 gap-1 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-sky-500/30 dark:text-sky-300 dark:hover:bg-blue-400/15">
+                  <Printer className="h-3.5 w-3.5" />{t("fac.ver")}
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {filas.length === 0 && <TableRow><TableCell colSpan={8} className="py-6 text-center text-muted-foreground">—</TableCell></TableRow>}
+        </TableBody>
+      </Table>
+
+      {comprobante && <ComprobanteInterno {...comprobante} alCerrar={() => setComprobante(null)} />}
+    </Panel>
+  );
 }

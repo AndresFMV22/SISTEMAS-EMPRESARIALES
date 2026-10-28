@@ -1,56 +1,160 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plane, Bus, Ship } from "lucide-react";
+import { Filter, MapPin, Plane, HelpCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Panel } from "@/components/administrador/ElementosTabla";
 import TarjetaIluminada from "@/components/reactbits/TarjetaIluminada";
 import ContadorAnimado from "@/components/reactbits/ContadorAnimado";
 import { leerDinero } from "@/lib/dinero";
 
+const cristal = "rounded-2xl p-5 border border-border/70 bg-card/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(2,32,90,0.06)]";
 const aparecer = {
   hidden: { opacity: 0, y: 18 },
   show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] } }),
 };
 
+const anioDe = (fecha) => (typeof fecha === "string" && /^\d{4}/.test(fecha) ? fecha.slice(0, 4) : null);
+
+// Total pactado de una reserva (neto de descuentos). Null si no se conoce con fiabilidad.
+function totalReserva(reserva, paquetes) {
+  const meta = reserva[8] && typeof reserva[8] === "object" ? reserva[8] : null;
+  if (meta?.total != null) return meta.total;
+  const paquete = paquetes.find((fila) => fila.nombre === reserva[2]);
+  const pax = Number(reserva[3]) || 0;
+  return paquete && pax ? leerDinero(paquete.precio) * pax : null;
+}
+
+function tipoDestino(reserva, paquetes) {
+  const meta = reserva[8] && typeof reserva[8] === "object" ? reserva[8] : null;
+  const paquete = meta?.paquete_id != null
+    ? paquetes.find((fila) => String(fila.id) === String(meta.paquete_id))
+    : paquetes.find((fila) => fila.nombre === reserva[2]);
+  const tipo = meta?.contenido_contratado?.tipo_destino || paquete?.tipo_destino;
+  if (tipo === "nacional") return "nacional";
+  if (tipo === "internacional") return "internacional";
+  return "sinClasificar";
+}
+
+function Indicador({ etiqueta, valor, prefijo = "", indice, nota }) {
+  return <motion.div variants={aparecer} custom={indice} initial="hidden" animate="show">
+    <TarjetaIluminada className={cristal} spotlightColor="rgba(37,99,235,0.12)">
+      <p className="mb-2 text-[13px] text-muted-foreground">{etiqueta}</p>
+      <p className="break-words text-[clamp(1.05rem,2vw,1.6875rem)] font-bold text-foreground"><ContadorAnimado to={valor} prefix={prefijo} duration={1.6} /></p>
+      {nota && <p className="mt-1 text-[11px] text-muted-foreground">{nota}</p>}
+    </TarjetaIluminada>
+  </motion.div>;
+}
+
 export default function ReportesAdministrador({ datos }) {
   const { reservas, pagos, paquetes } = datos;
-  const ventas = pagos.reduce((suma, pago) => suma + leerDinero(pago[4]), 0);
-  const asesores = Object.entries(reservas.reduce((agrupados, reserva) => {
+  const [anio, setAnio] = useState("");
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+
+  const enPeriodo = (fecha) => {
+    if (!fecha) return false;
+    if (anio && anioDe(fecha) !== anio) return false;
+    if (desde && fecha < desde) return false;
+    if (hasta && fecha > hasta) return false;
+    return true;
+  };
+
+  const anios = [...new Set([...pagos.map((pago) => anioDe(pago[5])), ...reservas.map((reserva) => anioDe(reserva[4]))].filter(Boolean))].sort().reverse();
+
+  // Cobros: por fecha de pago. Reservas: por fecha de viaje.
+  const cobros = pagos.filter((pago) => enPeriodo(pago[5]));
+  const dineroAbonado = cobros.reduce((suma, pago) => suma + leerDinero(pago[4]), 0);
+  const reservasPeriodo = reservas.filter((reserva) => enPeriodo(reserva[4]));
+
+  let valorReservado = 0;
+  let sinTotal = 0;
+  let saldoPendiente = 0;
+  reservasPeriodo.forEach((reserva) => {
+    const total = totalReserva(reserva, paquetes);
+    if (total == null) { sinTotal += 1; return; }
+    valorReservado += total;
+    if (reserva[7] !== "Cancelada") {
+      const pagado = pagos.filter((pago) => pago[1] === reserva[0]).reduce((suma, pago) => suma + leerDinero(pago[4]), 0);
+      saldoPendiente += Math.max(total - pagado, 0);
+    }
+  });
+
+  const asesorPorReserva = new Map(reservas.map((reserva) => [reserva[0], reserva[5] || "Sin asignar"]));
+  const porAsesor = new Map();
+  reservasPeriodo.forEach((reserva) => {
     const asesor = reserva[5] || "Sin asignar";
-    agrupados[asesor] = (agrupados[asesor] || 0) + 1;
-    return agrupados;
-  }, {})).sort((primero, segundo) => segundo[1] - primero[1]);
-  const nacionales = reservas.filter((reserva) => {
-    const paquete = reserva[8]?.paquete_id != null ? paquetes.find((fila) => String(fila.id) === String(reserva[8].paquete_id)) : paquetes.find((fila) => fila.nombre === reserva[2]);
-    const tipo = reserva[8]?.contenido_contratado?.tipo_destino || paquete?.tipo_destino;
-    return tipo ? tipo === "nacional" : paquete?.ubicacion?.includes("Colombia");
-  }).length;
-  const totalViajes = reservas.length || 1;
-  const distribucion = [[Plane, "Internacionales", Math.round((reservas.length - nacionales) / totalViajes * 100)], [Bus, "Nacionales", Math.round(nacionales / totalViajes * 100)], [Ship, "Cruceros", 0]];
+    const registro = porAsesor.get(asesor) || { reservas: 0, abonado: 0 };
+    registro.reservas += 1;
+    porAsesor.set(asesor, registro);
+  });
+  cobros.forEach((pago) => {
+    const asesor = asesorPorReserva.get(pago[1]) || "Sin asignar";
+    const registro = porAsesor.get(asesor) || { reservas: 0, abonado: 0 };
+    registro.abonado += leerDinero(pago[4]);
+    porAsesor.set(asesor, registro);
+  });
+  const asesores = [...porAsesor.entries()].sort((a, b) => b[1].reservas - a[1].reservas);
+
+  const conteoTipo = { nacional: 0, internacional: 0, sinClasificar: 0 };
+  reservasPeriodo.forEach((reserva) => { conteoTipo[tipoDestino(reserva, paquetes)] += 1; });
+  const totalTipo = reservasPeriodo.length || 1;
+  const distribucion = [
+    [MapPin, "Nacionales", conteoTipo.nacional],
+    [Plane, "Internacionales", conteoTipo.internacional],
+    [HelpCircle, "Sin clasificar", conteoTipo.sinClasificar],
+  ];
+
   return <div className="space-y-6">
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      {[
-        { lbl: "Pagos registrados", to: ventas, prefix: "$ " },
-        { lbl: "Pago promedio", to: pagos.length ? Math.round(ventas / pagos.length) : 0, prefix: "$ " },
-        { lbl: "Reservas registradas", to: reservas.length },
-      ].map((k, i) => <motion.div key={k.lbl} variants={aparecer} custom={i} initial="hidden" animate="show">
-        <TarjetaIluminada className="rounded-2xl p-5 border border-border/70 bg-card/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(2,32,90,0.06)]" spotlightColor="rgba(37,99,235,0.12)">
-          <p className="mb-2 text-[13px] text-muted-foreground">{k.lbl}</p>
-          <p className="break-words text-[clamp(1.05rem,2vw,1.6875rem)] font-bold text-foreground"><ContadorAnimado to={k.to} prefix={k.prefix || ""} suffix={k.suffix || ""} decimals={k.decimals || 0} duration={1.6} /></p>
-        </TarjetaIluminada>
-      </motion.div>)}
+    {/* Filtro de periodo explícito */}
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${cristal} py-3`}>
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Filter className="h-4 w-4 text-blue-600" />Filtrar por periodo</div>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <label className="font-medium">Año</label>
+        <select value={anio} onChange={(e) => setAnio(e.target.value)} className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground">
+          <option value="">Todos</option>
+          {anios.map((valor) => <option key={valor} value={valor}>{valor}</option>)}
+        </select>
+        <label className="font-medium">Desde</label><Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="h-9 w-[150px]" />
+        <label className="font-medium">Hasta</label><Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="h-9 w-[150px]" />
+        {(anio || desde || hasta) && <Button size="sm" variant="ghost" className="h-8 px-2 text-blue-600 dark:text-sky-300" onClick={() => { setAnio(""); setDesde(""); setHasta(""); }}>Limpiar</Button>}
+      </div>
+      <span className="ml-auto text-[11px] text-muted-foreground">Cobros por fecha de pago · Reservas por fecha de viaje</span>
     </div>
+
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <Indicador etiqueta="Dinero abonado (cobros)" valor={dineroAbonado} prefijo="$ " indice={0} nota={`${cobros.length} pagos`} />
+      <Indicador etiqueta="Valor reservado (neto)" valor={valorReservado} prefijo="$ " indice={1} nota={sinTotal ? `${sinTotal} sin total fiable` : null} />
+      <Indicador etiqueta="Saldo pendiente" valor={saldoPendiente} prefijo="$ " indice={2} nota="excluye canceladas" />
+      <Indicador etiqueta="Reservas del periodo" valor={reservasPeriodo.length} indice={3} />
+    </div>
+
     <div className="grid gap-5 lg:grid-cols-2">
-      <Panel titulo="Reservas por asesor" etiqueta="total"><div className="divide-y divide-border">
-        {asesores.map(([asesor, cantidad], indice) => <div key={asesor} className="flex items-center gap-3 py-2.5">
-          <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-sm font-bold text-blue-700 dark:text-sky-300">{indice + 1}</div>
-          <div className="flex-1"><b className="text-sm text-foreground">{asesor}</b></div><span className="text-sm font-semibold text-blue-600">{cantidad} reservas</span>
-        </div>)}
-      </div></Panel>
-      <Panel titulo="Distribución de reservas" etiqueta="por tipo"><div className="space-y-4">
-        {distribucion.map(([Icono, etiqueta, porcentaje]) => <div key={etiqueta}>
-          <div className="mb-1 flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-foreground"><Icono className="h-4 w-4 text-blue-600" />{etiqueta}</span><span className="font-semibold text-blue-600">{porcentaje}%</span></div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><motion.div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-600" initial={{ width: 0 }} animate={{ width: `${porcentaje}%` }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} /></div>
-        </div>)}
-      </div></Panel>
+      <Panel titulo="Reservas y abonos por asesor" etiqueta="periodo">
+        <div className="divide-y divide-border">
+          {asesores.length === 0 && <p className="py-2 text-sm text-muted-foreground">—</p>}
+          {asesores.map(([asesor, registro], indice) => <div key={asesor} className="flex items-center gap-3 py-2.5">
+            <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-sm font-bold text-blue-700 dark:text-sky-300">{indice + 1}</div>
+            <div className="flex-1"><b className="text-sm text-foreground">{asesor}</b><small className="block text-[11.5px] text-muted-foreground">{registro.reservas} reservas · abonado {leerDinero(registro.abonado).toLocaleString("es-CO")}</small></div>
+            <span className="text-sm font-semibold text-blue-600">$ {registro.abonado.toLocaleString("es-CO")}</span>
+          </div>)}
+        </div>
+      </Panel>
+      <Panel titulo="Distribución por tipo de destino" etiqueta="por reservas del periodo">
+        <div className="space-y-4">
+          {distribucion.map(([Icono, etiqueta, cantidad]) => {
+            const porcentaje = Math.round((cantidad / totalTipo) * 100);
+            return <div key={etiqueta}>
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-foreground"><Icono className="h-4 w-4 text-blue-600" />{etiqueta}</span>
+                <span className="font-semibold text-blue-600">{cantidad} · {porcentaje}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><motion.div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-600" initial={{ width: 0 }} animate={{ width: `${porcentaje}%` }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} /></div>
+            </div>;
+          })}
+          <p className="text-[11px] text-muted-foreground">«Sin clasificar» agrupa reservas cuyo tipo de destino no está registrado; no se infiere.</p>
+        </div>
+      </Panel>
     </div>
   </div>;
 }

@@ -37,6 +37,15 @@ commit de esta entrega y que el compañero lo haya recibido.
 
 ## 1. Facturación interna: primer bloque funcional
 
+> **Estado (28/10/2026): implementado.** La vista `FacturasAdministrador.jsx` ya no
+> promete DIAN/IVA (subtítulo y columnas corregidos, aviso de documento interno) y
+> abre un `ComprobanteInterno.jsx` de solo lectura por reserva real (cliente,
+> documento, responsable, fechas, pasajeros, subtotal, descuento, total, abonos y
+> saldo) con impresión del navegador (CSS `@media print`). El comprobante automático
+> de reservas gestionadas se conserva; el manual sigue bloqueado para esas reservas.
+> Evidencia: `npm run build` y `npm run lint` locales. No se simuló validación fiscal
+> ni se recalcularon ventas previas. Falta: revisión en entorno remoto/impresión real.
+
 ### Evidencia actual
 
 - `src/vistas/administrador/FacturasAdministrador.jsx`: «Valor + IVA» y «Estado DIAN».
@@ -71,6 +80,16 @@ DIAN real solo si el equipo/profesor la exige expresamente; la propuesta disting
 documento interno de integración fiscal.
 
 ## 2. Reportes: segundo bloque funcional
+
+> **Estado (28/10/2026): implementado.** `ReportesAdministrador.jsx` ahora tiene
+> filtro de periodo (año + rango Desde/Hasta) con alcance visible: cobros por fecha
+> de pago y reservas por fecha de viaje. Separa **dinero abonado** de **valor
+> reservado neto**, reporta **saldo pendiente** (excluye canceladas y marca reservas
+> sin total fiable), y muestra reservas/abonos por asesor. La distribución usa el
+> tipo de destino real (nacional / internacional / **Sin clasificar**); se eliminó la
+> categoría fija «Cruceros» y ya no se infiere internacional por defecto.
+> Evidencia: `npm run build` y `npm run lint` locales con datos de demostración.
+> Falta: fixture con dos años y cancelaciones en entorno autorizado (bloque 4).
 
 ### Faltantes comprobados
 

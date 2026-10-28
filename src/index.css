@@ -235,3 +235,11 @@
 @media (prefers-reduced-motion: reduce) {
   .shiny-text, .gradient-text-content, .gradient-overlay, .star-glow { animation: none !important; }
 }
+/* Impresión del comprobante interno: solo se imprime esa tarjeta, en blanco y negro */
+@media print {
+  body * { visibility: hidden !important; }
+  .comprobante-imprimible, .comprobante-imprimible * { visibility: visible !important; }
+  .comprobante-imprimible, .comprobante-imprimible * { color: #000 !important; background: transparent !important; border-color: #bbb !important; }
+  .comprobante-imprimible { position: fixed; inset: 0; margin: 0; padding: 28px; background: #fff !important; overflow: visible; }
+  .no-imprimir { display: none !important; }
+}

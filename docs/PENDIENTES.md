@@ -125,6 +125,14 @@ CSV/PDF adicional solo si lo pide la entrega; no es requisito explícito revisad
 
 ## 3. Cierre de UI e idiomas
 
+> **Estado (28/10/2026): avanzado.** Se trasladaron a `src/lib/i18n.jsx` las etiquetas
+> heredadas de facturas, reportes y los indicadores del resumen (claves `fac.*`,
+> `comp.*`, `kpi.*`, `rep.*`) en los cinco idiomas; `FacturasAdministrador.jsx`,
+> `ReportesAdministrador.jsx` y `ResumenAdministrador.jsx` ya no tienen textos fijos
+> de esos módulos y se corrigió el subtítulo «DIAN». Evidencia: `npm run build` y
+> `npm run lint` locales. Falta por revisar en pantalla: móvil (390 px), teclado y
+> foco de diálogos, y una lectura final de los cinco idiomas en ejecución.
+
 1. Completar etiquetas heredadas de facturas, reportes y resumen en
    `src/lib/i18n.jsx`; varias siguen fijas en español.
 2. Revisar cinco idiomas, COP, duración/fechas, estados de reserva vs pago, carga,
@@ -138,6 +146,11 @@ CSV/PDF adicional solo si lo pide la entrega; no es requisito explícito revisad
 textos nuevos sin traducción prevista; build/lint correctos y avisos existentes anotados.
 
 ## 4. Matriz real de negocio, permisos y concurrencia
+
+> **Estado (28/10/2026): NO ejecutado en este relevo.** Requiere un entorno Supabase
+> autorizado y varias sesiones/cuentas reales; no puede hacerse desde el repositorio
+> ni certificarse con mocks. Debe ejecutarlo el equipo en su entorno. No se generaron
+> ventas, cuentas ni correos de prueba.
 
 PGlite y navegador simulado pasaron; esta integración real **no está certificada**.
 Usar proyecto de pruebas o cuentas/registros autorizados. La autorización para
@@ -172,6 +185,11 @@ los afectados. PGlite secuencial no prueba concurrencia real multi-sesión.
 
 ## 5. Auth, correo y publicación
 
+> **Estado (28/10/2026): NO ejecutado en este relevo.** Requiere la consola de Supabase
+> (Site URL, redirects, SMTP, CORS), correos reales y el despliegue del frontend con
+> credenciales del proveedor de hosting. Son acciones de la cuenta del equipo; no se
+> realizan desde el repositorio. Debe hacerlo el equipo en su entorno autorizado.
+
 Edge Function `gestionar-accesos` desplegada ACTIVE v3. Falta comprobar equivalencia
 con código previsto y operación real. Ver [DESPLIEGUE_ACCESOS.md](DESPLIEGUE_ACCESOS.md)
 sin repetir migraciones.
@@ -192,6 +210,11 @@ sin repetir migraciones.
 allí; datos reales conservados. Este relevo no certifica ese despliegue frontend.
 
 ## 6. Entrega final y decisiones abiertas
+
+> **Estado (28/10/2026): parcial.** Se agregó un manual corto por rol con el recorrido
+> completo en [MANUAL.md](MANUAL.md). Faltan: evidencias de pruebas reales (dependen de
+> los bloques 4 y 5), diagramas y los documentos académicos exigidos, además de las
+> decisiones abiertas del cuadro inferior (DIAN real, reembolsos, pasarela, portal cliente).
 
 ### Entrega mínima propuesta
 

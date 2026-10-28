@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Panel } from "@/components/administrador/ElementosTabla";
 import TarjetaIluminada from "@/components/reactbits/TarjetaIluminada";
 import ContadorAnimado from "@/components/reactbits/ContadorAnimado";
+import { useIdioma } from "@/lib/i18n.jsx";
 import { leerDinero } from "@/lib/dinero";
 
 const cristal = "rounded-2xl p-5 border border-border/70 bg-card/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(2,32,90,0.06)]";
@@ -47,6 +48,7 @@ function Indicador({ etiqueta, valor, prefijo = "", indice, nota }) {
 }
 
 export default function ReportesAdministrador({ datos }) {
+  const { t } = useIdioma();
   const { reservas, pagos, paquetes } = datos;
   const [anio, setAnio] = useState("");
   const [desde, setDesde] = useState("");
@@ -100,47 +102,47 @@ export default function ReportesAdministrador({ datos }) {
   reservasPeriodo.forEach((reserva) => { conteoTipo[tipoDestino(reserva, paquetes)] += 1; });
   const totalTipo = reservasPeriodo.length || 1;
   const distribucion = [
-    [MapPin, "Nacionales", conteoTipo.nacional],
-    [Plane, "Internacionales", conteoTipo.internacional],
-    [HelpCircle, "Sin clasificar", conteoTipo.sinClasificar],
+    [MapPin, t("rep.nacionales"), conteoTipo.nacional],
+    [Plane, t("rep.internacionales"), conteoTipo.internacional],
+    [HelpCircle, t("rep.sinClasificar"), conteoTipo.sinClasificar],
   ];
 
   return <div className="space-y-6">
     {/* Filtro de periodo explícito */}
     <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${cristal} py-3`}>
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Filter className="h-4 w-4 text-blue-600" />Filtrar por periodo</div>
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Filter className="h-4 w-4 text-blue-600" />{t("rep.filtrar")}</div>
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <label className="font-medium">Año</label>
+        <label className="font-medium">{t("rep.anio")}</label>
         <select value={anio} onChange={(e) => setAnio(e.target.value)} className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground">
-          <option value="">Todos</option>
+          <option value="">{t("rep.todos")}</option>
           {anios.map((valor) => <option key={valor} value={valor}>{valor}</option>)}
         </select>
-        <label className="font-medium">Desde</label><Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="h-9 w-[150px]" />
-        <label className="font-medium">Hasta</label><Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="h-9 w-[150px]" />
-        {(anio || desde || hasta) && <Button size="sm" variant="ghost" className="h-8 px-2 text-blue-600 dark:text-sky-300" onClick={() => { setAnio(""); setDesde(""); setHasta(""); }}>Limpiar</Button>}
+        <label className="font-medium">{t("dash.from")}</label><Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="h-9 w-[150px]" />
+        <label className="font-medium">{t("dash.to")}</label><Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="h-9 w-[150px]" />
+        {(anio || desde || hasta) && <Button size="sm" variant="ghost" className="h-8 px-2 text-blue-600 dark:text-sky-300" onClick={() => { setAnio(""); setDesde(""); setHasta(""); }}>{t("dash.clear")}</Button>}
       </div>
-      <span className="ml-auto text-[11px] text-muted-foreground">Cobros por fecha de pago · Reservas por fecha de viaje</span>
+      <span className="ml-auto text-[11px] text-muted-foreground">{t("rep.alcance")}</span>
     </div>
 
     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-      <Indicador etiqueta="Dinero abonado (cobros)" valor={dineroAbonado} prefijo="$ " indice={0} nota={`${cobros.length} pagos`} />
-      <Indicador etiqueta="Valor reservado (neto)" valor={valorReservado} prefijo="$ " indice={1} nota={sinTotal ? `${sinTotal} sin total fiable` : null} />
-      <Indicador etiqueta="Saldo pendiente" valor={saldoPendiente} prefijo="$ " indice={2} nota="excluye canceladas" />
-      <Indicador etiqueta="Reservas del periodo" valor={reservasPeriodo.length} indice={3} />
+      <Indicador etiqueta={t("rep.dineroAbonado")} valor={dineroAbonado} prefijo="$ " indice={0} nota={`${cobros.length} ${t("rep.pagosNota")}`} />
+      <Indicador etiqueta={t("rep.valorReservado")} valor={valorReservado} prefijo="$ " indice={1} nota={sinTotal ? `${sinTotal} ${t("rep.sinTotal")}` : null} />
+      <Indicador etiqueta={t("pay.saldo")} valor={saldoPendiente} prefijo="$ " indice={2} nota={t("rep.excluyeCanceladas")} />
+      <Indicador etiqueta={t("rep.reservasPeriodo")} valor={reservasPeriodo.length} indice={3} />
     </div>
 
     <div className="grid gap-5 lg:grid-cols-2">
-      <Panel titulo="Reservas y abonos por asesor" etiqueta="periodo">
+      <Panel titulo={t("rep.porAsesor")} etiqueta={t("rep.periodo")}>
         <div className="divide-y divide-border">
           {asesores.length === 0 && <p className="py-2 text-sm text-muted-foreground">—</p>}
           {asesores.map(([asesor, registro], indice) => <div key={asesor} className="flex items-center gap-3 py-2.5">
             <div className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 dark:border-sky-500/30 bg-blue-500/10 text-sm font-bold text-blue-700 dark:text-sky-300">{indice + 1}</div>
-            <div className="flex-1"><b className="text-sm text-foreground">{asesor}</b><small className="block text-[11.5px] text-muted-foreground">{registro.reservas} reservas · abonado {leerDinero(registro.abonado).toLocaleString("es-CO")}</small></div>
+            <div className="flex-1"><b className="text-sm text-foreground">{asesor}</b><small className="block text-[11.5px] text-muted-foreground">{registro.reservas} {t("rep.reservasSuf")} · {t("pay.paid").toLowerCase()} $ {registro.abonado.toLocaleString("es-CO")}</small></div>
             <span className="text-sm font-semibold text-blue-600">$ {registro.abonado.toLocaleString("es-CO")}</span>
           </div>)}
         </div>
       </Panel>
-      <Panel titulo="Distribución por tipo de destino" etiqueta="por reservas del periodo">
+      <Panel titulo={t("rep.distribucion")} etiqueta={t("rep.porReservasPeriodo")}>
         <div className="space-y-4">
           {distribucion.map(([Icono, etiqueta, cantidad]) => {
             const porcentaje = Math.round((cantidad / totalTipo) * 100);
@@ -152,7 +154,7 @@ export default function ReportesAdministrador({ datos }) {
               <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><motion.div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-blue-600" initial={{ width: 0 }} animate={{ width: `${porcentaje}%` }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} /></div>
             </div>;
           })}
-          <p className="text-[11px] text-muted-foreground">«Sin clasificar» agrupa reservas cuyo tipo de destino no está registrado; no se infiere.</p>
+          <p className="text-[11px] text-muted-foreground">{t("rep.notaSinClasificar")}</p>
         </div>
       </Panel>
     </div>

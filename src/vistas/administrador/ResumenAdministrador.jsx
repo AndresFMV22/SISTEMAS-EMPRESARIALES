@@ -21,10 +21,10 @@ function crearIndicadores({ clientes, paquetes, reservas, pagos }) {
   const ingresos = pagos.reduce((total, pago) => total + leerDinero(pago[4]), 0);
   const cupos = paquetes.reduce((total, paquete) => total + (Number(paquete.cupo?.match(/Cupos:\s*(\d+)/i)?.[1]) || 0), 0);
   return [
-    { lbl: "Reservas activas", to: reservas.filter((reserva) => !["Cancelada", "Finalizada"].includes(reserva[7])).length },
-    { lbl: "Pagos registrados", to: ingresos, prefix: "$ " },
-    { lbl: "Clientes registrados", to: clientes.length },
-    { lbl: "Cupos mostrados", to: cupos },
+    { lbl: "kpi.reservasActivas", to: reservas.filter((reserva) => !["Cancelada", "Finalizada"].includes(reserva[7])).length },
+    { lbl: "kpi.pagosRegistrados", to: ingresos, prefix: "$ " },
+    { lbl: "kpi.clientes", to: clientes.length },
+    { lbl: "kpi.cupos", to: cupos },
   ];
 }
 
@@ -80,7 +80,7 @@ export default function ResumenAdministrador({ datos }) {
   });
   return <div className="space-y-6">
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {crearIndicadores(datos).map((indicador, indice) => <TarjetaIndicador key={indicador.lbl} indicador={indicador} indice={indice} />)}
+      {crearIndicadores(datos).map((indicador, indice) => <TarjetaIndicador key={indicador.lbl} indicador={{ ...indicador, lbl: t(indicador.lbl) }} indice={indice} />)}
     </div>
     <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
       <Panel titulo={t("dash.ventas")} etiqueta="COP"><GraficoBarras pagos={pagos} /></Panel>

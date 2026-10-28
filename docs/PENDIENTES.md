@@ -185,10 +185,14 @@ los afectados. PGlite secuencial no prueba concurrencia real multi-sesión.
 
 ## 5. Auth, correo y publicación
 
-> **Estado (28/10/2026): NO ejecutado en este relevo.** Requiere la consola de Supabase
-> (Site URL, redirects, SMTP, CORS), correos reales y el despliegue del frontend con
-> credenciales del proveedor de hosting. Son acciones de la cuenta del equipo; no se
-> realizan desde el repositorio. Debe hacerlo el equipo en su entorno autorizado.
+> **Estado (28/10/2026): preparado, falta publicar.** El frontend quedó **listo para
+> desplegar**: `vite.config.js` usa `base` relativa en build, los assets/logo usan
+> `import.meta.env.BASE_URL` y se generó `dist/` correcto para un subdirectorio
+> (GitHub Pages). Falta, como acción de la cuenta del equipo (no se hace desde el repo):
+> publicar el sitio (p. ej. rama `gh-pages` o Vercel/Netlify) y configurar en el panel
+> de Supabase el **Site URL / Redirect URLs / SMTP / CORS** para que el acceso real y
+> la recuperación funcionen en la URL final. Mientras tanto, el sitio publicado
+> funciona en modo **Explorar demostración**.
 
 Edge Function `gestionar-accesos` desplegada ACTIVE v3. Falta comprobar equivalencia
 con código previsto y operación real. Ver [DESPLIEGUE_ACCESOS.md](DESPLIEGUE_ACCESOS.md)

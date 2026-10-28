@@ -17,7 +17,7 @@ export default function PanelUsuario({ perfil, alSalir, navegacion, vista, alNav
     <a href="#contenido-panel" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-background focus:p-3">{t("asesor.saltar")}</a>
     <BarraLateral abierta={menuAbierto}>
       <CabeceraBarraLateral><button type="button" onClick={() => navegar(navegacion[0].id)} title={t(navegacion[0].etiqueta || `nav.${navegacion[0].id}`)} className="flex w-full items-center gap-3 rounded-xl px-2 py-1 hover:bg-sky-500/10 focus-visible:ring-2">
-        <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(37,99,235,0.22)] ring-1 ring-blue-100"><img src="/logo-mark.png" alt="" width="32" height="32" /></span>
+        <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_24px_rgba(37,99,235,0.22)] ring-1 ring-blue-100"><img src={`${import.meta.env.BASE_URL}logo-mark.png`} alt="" width="32" height="32" /></span>
         <span className="text-lg font-bold">Nóva<TextoDegradado colors={coloresMarca}>Travel</TextoDegradado></span>
       </button></CabeceraBarraLateral>
       <ContenidoBarraLateral etiqueta={t("paquetes.navegacion")}>

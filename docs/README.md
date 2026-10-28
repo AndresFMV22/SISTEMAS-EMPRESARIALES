@@ -8,6 +8,7 @@
 | [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md) | Estado vigente, reglas acordadas, mapa del código, BD y pruebas. |
 | [PENDIENTES.md](PENDIENTES.md) | Trabajo restante, prioridades, archivos y criterios de cierre; instrucción lista para el compañero. |
 | [MANUAL.md](MANUAL.md) | Manual de uso corto por rol (administrador y asesor) y recorrido completo. |
+| [PRUEBAS_BLOQUE4.md](PRUEBAS_BLOQUE4.md) | Guion ejecutable de la matriz de negocio/permisos/concurrencia (bloque 4). |
 | [FASES_1_2.md](FASES_1_2.md) | Fechas/duración, estados separados, creación común y abonos. |
 | [FASE_3.md](FASE_3.md) | Paquetes, proveedores, servicios y contenido contratado. |
 | [FASE_4.md](FASE_4.md) | Promociones, recotización, aceptación y despliegue remoto comprobado. |

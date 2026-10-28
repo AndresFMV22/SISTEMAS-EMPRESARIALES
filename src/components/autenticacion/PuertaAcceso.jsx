@@ -138,7 +138,7 @@ export default function PuertaAcceso({ panelAdministrador: PanelAdministrador, p
 
   return <><div className="absolute right-4 top-4 z-20">{controles}</div><main className="relative z-10 flex min-h-screen items-center justify-center px-5 pb-32 pt-24">
     <section className="w-full max-w-[440px] space-y-5 rounded-3xl border border-border/70 bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-9">
-      <div className="flex items-center justify-center gap-3"><img src="/logo-mark.png" alt="" width="48" height="48" className="rounded-xl bg-white p-1" /><span className="text-2xl font-bold">Nóva<span className="text-blue-600 dark:text-sky-300">Travel</span></span></div>
+      <div className="flex items-center justify-center gap-3"><img src={`${import.meta.env.BASE_URL}logo-mark.png`} alt="" width="48" height="48" className="rounded-xl bg-white p-1" /><span className="text-2xl font-bold">Nóva<span className="text-blue-600 dark:text-sky-300">Travel</span></span></div>
       {estado.cargando ? <p role="status">{t("acceso.validando")}</p>
         : !supabaseConfigurado ? <><h1 className="text-xl font-semibold">{t("acceso.demo")}</h1><p className="text-sm text-muted-foreground">{t("acceso.demoAviso")}</p><Button className="w-full" onClick={() => cambiarDemo(true)}>{t("acceso.abrirDemo")}</Button></>
         : errorEnlace ? <><p role="alert" className="text-sm text-amber-600">{t("acceso.errorEnlace")}</p>{estado.identidadContrasena && <p className="break-words text-sm">{t("acceso.sesionActual")} <strong>{estado.identidadContrasena.correo}</strong></p>}<FormularioAcceso key="enlace-invalido" modo="recuperar" soloRecuperacion alCompletar={revalidar} /></>
